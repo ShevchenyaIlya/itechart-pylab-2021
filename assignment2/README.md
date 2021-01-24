@@ -11,6 +11,8 @@ username, user karma, user cake day, post karma, comment karma, post date, numbe
 
 - _file_management.py_ - processing and communication with files
 
+- _url_processing.py_ - functions for managing request url
+
 - _parser_async_page_opening.py_ - analog of _parser.py_ but user pages are opened and parsed asynchronously
 ## How do I start the program? 
 ### Run parser.py
