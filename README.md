@@ -1,6 +1,6 @@
 # iTechArt Python labs 2021
 
-Every folder consists of files that solve tasks represented in laboratory works.
+Each folder consists of files written in Python for solving laboratory tasks.
 
 ## Tasks
 
