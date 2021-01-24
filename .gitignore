@@ -1,0 +1,12 @@
+__pycache__/
+
+.idea/
+build/
+
+.env
+.venv
+env/
+venv/
+
+*.txt
+*.log
