@@ -24,8 +24,7 @@ from assignment2.logging_converter import string_to_logging_level
 
 def find_chrome_driver() -> str:
     p = subprocess.run("which -a chromedriver", shell=True, stdout=subprocess.PIPE)
-    result = p.stdout.decode()
-    return result
+    return p.stdout.decode().rstrip(os.linesep)
 
 
 def load_xpath_templates_from_json():
@@ -308,12 +307,12 @@ if __name__ == "__main__":
     xpath = load_xpath_templates_from_json()
     executor = ThreadPoolExecutor(max_workers=20)
 
-    if os.path.isfile(chrome_driver):
+    if not os.path.isfile(chrome_driver):
+        configured_logger.error(f"Chrome drive does not exists at this link: {chrome_driver}!")
+    else:
         start = time.time()
         loop = asyncio.get_event_loop()
         scrape(executor, chrome_driver, max_post_count, configured_logger, xpath, running_loop=loop)
         loop.run_until_complete(asyncio.gather(*asyncio.all_tasks(loop)))
         executor.shutdown(True)
-        print(time.time() - start, " seconds.")
-    else:
-        configured_logger.error(f"Chrome drive does not exists at this link: {chrome_driver}!")
+        configured_logger.debug(f"Processing time: {time.time() - start} seconds")
