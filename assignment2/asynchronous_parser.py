@@ -5,6 +5,7 @@ import logging
 import argparse
 import aiohttp
 import dateparser
+import subprocess
 import json
 import time
 from typing import List, Dict, Tuple
@@ -22,8 +23,9 @@ from assignment2.logging_converter import string_to_logging_level
 
 
 def find_chrome_driver() -> str:
-    stream = os.popen('which -a chromedriver')
-    return stream.read().rstrip(os.linesep)
+    p = subprocess.run("which -a chromedriver", shell=True, stdout=subprocess.PIPE)
+    result = p.stdout.decode()
+    return result
 
 
 def load_xpath_templates_from_json():
