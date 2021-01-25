@@ -1,0 +1,19 @@
+#!/bin/sh
+
+comment_text=$( cat "$1" )
+comment_size=${#comment_text} 
+word_count=$( echo "$comment_text" | wc -w ) 
+russian_characters=$( echo "$comment_text" | grep -Eo "[А-Яа-яЁё]*")
+
+if [ -n "$russian_characters" ] ;
+then 
+  echo "The commit message text can only contain English characters!"
+  exit 1
+fi
+
+if [ $word_count -le 2 ] || [ $comment_size -lt 10 ] ;
+then 
+  echo "Commit message contains less than of 2 words"
+  echo "or commit message len less than 10!"
+  exit 1
+fi
