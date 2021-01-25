@@ -14,3 +14,14 @@ http://localhost:8087/, which in turn provides a simple API for working with bas
 
 [More information](assignment2/README.md)
 
+## Setup hooks
+
+- Make _setup.sh_ executable
+```bash
+chmod +x setup.sh
+```
+
+- Run _setup.sh_ to copy hooks
+```bash
+./setup.sh
+```
