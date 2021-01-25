@@ -18,12 +18,7 @@ from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 from selenium.common.exceptions import TimeoutException, StaleElementReferenceException
 from concurrent.futures.thread import ThreadPoolExecutor
 
-
-def string_to_logging_level(log_level: str) -> int:
-    possible_levels = {'DEBUG': logging.DEBUG, 'INFO': logging.INFO, 'WARNING': logging.WARNING,
-                       'ERROR': logging.ERROR, 'CRITICAL': logging.CRITICAL}
-
-    return possible_levels[log_level]
+from assignment2.logging_converter import string_to_logging_level
 
 
 def find_chrome_driver() -> str:
@@ -36,12 +31,6 @@ def load_xpath_templates_from_json():
         xpath_templates = json.load(json_file)
 
     return xpath_templates
-
-
-def write_to_file(filename: str, data: List[str]) -> None:
-    with open(filename, "w") as file:
-        for serialize_post in data:
-            file.write(f"{serialize_post}{os.linesep}")
 
 
 def generate_uuid():
@@ -69,18 +58,6 @@ def config_browser(chrome_drive_path: str) -> webdriver.Chrome:
     options.add_argument('--no-proxy-server')
 
     return webdriver.Chrome(chrome_drive_path, options=options, desired_capabilities=caps)
-
-
-def generate_filename() -> str:
-    current_date = datetime.now()
-    return f"reddit-{current_date.strftime('%Y%m%d%H%M')}.txt"
-
-
-def truncate_file_content(filename: str) -> None:
-    """Truncate content of file if file exist"""
-    if os.path.isfile(filename):
-        with open(filename, "w") as file:
-            file.truncate()
 
 
 def get_posts_list(html, xpath_templates):
@@ -155,7 +132,7 @@ def navigate_popup_menu(browser, post_id, current_post_info, logger):
     hover_current_post_element(browser, popup_menu)
 
     try:
-        popup_element = WebDriverWait(browser, 5).until(
+        popup_element = WebDriverWait(browser, 2).until(
             expected_conditions.presence_of_element_located((By.ID, f"UserInfoTooltip--{post_id}-hover-id"))
         )
         parse_popup_menu(current_post_info, popup_element)
@@ -213,9 +190,7 @@ async def start_user_parsing(browser, source, logger, xpath_templates):
 
 def parse_reddit_page(chrome_drive_path: str, post_count: int, logger: logging.Logger,
                       xpath_templates: Dict[str, str], condition, parsing_queue) -> None:
-    filename = generate_filename()
-    truncate_file_content(filename)
-    logger.info(f"The filename: {filename}!")
+    logger.info(f"Start chrome driver!")
     browser = config_browser(chrome_drive_path)
 
     try:
@@ -277,7 +252,7 @@ def parse_users_tabs(chrome_driver_path, post_count, logger, xpath_templates, co
         while condition["Processing"] and condition["Parsed count"] <= post_count:
             time.sleep(1)
 
-            if len(parsing_queue) >= 4:
+            if parsing_queue:
                 parsing_ready_posts = parsing_queue[:]
                 result = asyncio.run(start_user_parsing(browser, parsing_ready_posts, logger, xpath_templates))
 
