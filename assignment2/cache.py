@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from .file_management import get_all_posts, save_all_posts, generate_filename
+from assignment2.file_management import get_all_posts, save_all_posts, generate_filename
 
 
 def check_backup(function):

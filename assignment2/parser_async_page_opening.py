@@ -17,7 +17,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 from selenium.common.exceptions import TimeoutException, StaleElementReferenceException
 
-from .logging_converter import string_to_logging_level
+from assignment2.logging_converter import string_to_logging_level
 
 
 def write_to_file(filename: str, data: List[str]) -> None:
