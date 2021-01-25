@@ -17,13 +17,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 from selenium.common.exceptions import TimeoutException, StaleElementReferenceException
 
-from .logging_converter import string_to_logging_level
-
-
-def write_to_file(filename: str, data: List[str]) -> None:
-    with open(filename, "w") as file:
-        for serialize_post in data:
-            file.write(f"{serialize_post}{os.linesep}")
+from assignment2.logging_converter import string_to_logging_level
 
 
 def serialize_output_string(parsed_data: Dict[str, str]) -> str:
@@ -51,18 +45,6 @@ def config_browser(chrome_drive_path: str) -> webdriver.Chrome:
 
 def generate_uuid():
     return str(uuid.uuid1().hex)
-
-
-def generate_filename() -> str:
-    current_date = datetime.now()
-    return f"reddit-{current_date.strftime('%Y%m%d%H%M')}.txt"
-
-
-def truncate_file_content(filename: str) -> None:
-    """Truncate content of file if file exist"""
-    if os.path.isfile(filename):
-        with open(filename, "w") as file:
-            file.truncate()
 
 
 def get_posts_list(html, xpath_templates):
@@ -188,9 +170,7 @@ def parse_popup_menu(current_post_info, popup_element):
 
 def parse_reddit_page(chrome_drive_path: str, post_count: int, logger: logging.Logger,
                       xpath_templates: Dict[str, str]) -> None:
-    filename = generate_filename()
-    truncate_file_content(filename)
-    logger.info(f"The filename: {filename}!")
+    logger.info(f"Start chrome driver!")
     browser = config_browser(chrome_drive_path)
     parsed_information = []
 
