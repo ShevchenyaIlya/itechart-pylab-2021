@@ -137,7 +137,6 @@ def run_server(port, server_class=ThreadingHTTPServer, handler_class=CustomHTTPR
         logging.error(exception)
     finally:
         httpd.server_close()
-        # httpd.RequestHandlerClass.database_handler.close_connection()
         logging.info(f"Server closed on port {port}")
 
 
