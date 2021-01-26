@@ -5,14 +5,14 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from typing import Tuple
 
 from assignment2.cache import Cache
+from assignment2.postgresql_database import PostgreSQLHandler
 from assignment2.logging_converter import string_to_logging_level
 from assignment2.url_processing import find_matches, get_unique_id_from_url
 
 
 class CustomHTTPRequestHandler(BaseHTTPRequestHandler):
-    cache = Cache()
-
     def __init__(self, *args, **kwargs):
+        self.database_handler = PostgreSQLHandler()
         self.possible_endpoints = {
             ("GET", r"/posts/?"): self.get_all_posts_request,
             ("GET", r"/posts/.{32}/?"): self.get_single_post_request,
@@ -79,12 +79,12 @@ class CustomHTTPRequestHandler(BaseHTTPRequestHandler):
             self._set_response(404, "Not Found")
 
     def get_all_posts_request(self) -> Tuple[int, str, list]:
-        file_content = self.cache.get_all_posts()
-        return 200, "OK", file_content
+        db_content = self.database_handler.get_all_posts()
+        return 200, "OK", db_content
 
     def get_single_post_request(self):
         unique_id = get_unique_id_from_url(self.path)
-        post = self.cache.get_post_by_id(unique_id)
+        post = self.database_handler.get_single_post(unique_id)
 
         if post is not None:
             return 200, "OK", post
@@ -93,24 +93,24 @@ class CustomHTTPRequestHandler(BaseHTTPRequestHandler):
 
     def post_request(self, post_data: dict):
         unique_id = post_data["unique_id"]
-        if not self.cache.get_post_by_id(unique_id):
-            self.cache.append(unique_id, post_data)
-            line_number = self.cache.cache_size()
+        if not self.database_handler.get_single_post(unique_id):
+            self.database_handler.insert_parsed_post(post_data)
+            line_number = self.database_handler.row_count()
             return 201, "Created", {unique_id: line_number}
         else:
             return 200, "OK"
 
     def delete_request(self) -> Tuple[int, str]:
         unique_id = get_unique_id_from_url(self.path)
-        if self.cache.delete(unique_id):
+        if self.database_handler.delete(unique_id):
             return 200, "OK"
         else:
             return 205, "No Content"
 
     def put_request(self, post_data: dict) -> Tuple[int, str]:
         unique_id = get_unique_id_from_url(self.path)
-        if self.cache.get_post_by_id(unique_id):
-            self.cache.modify(unique_id, post_data)
+        if self.database_handler.get_single_post(unique_id):
+            self.database_handler.update_post(post_data)
             return 200, "OK"
         else:
             return 205, "No Content"
@@ -137,7 +137,7 @@ def run_server(port, server_class=ThreadingHTTPServer, handler_class=CustomHTTPR
         logging.error(exception)
     finally:
         httpd.server_close()
-        httpd.RequestHandlerClass.cache.backup_cache()
+        # httpd.RequestHandlerClass.database_handler.close_connection()
         logging.info(f"Server closed on port {port}")
 
 
