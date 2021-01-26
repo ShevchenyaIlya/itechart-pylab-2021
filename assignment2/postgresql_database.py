@@ -35,25 +35,14 @@ class PostgreSQLHandler:
         return False
 
     def create_posts_table(self):
-        self.cursor.execute("""CREATE TABLE IF NOT EXISTS users(
-            user_id SMALLSERIAL PRIMARY KEY NOT NULL,
-            username VARCHAR(50) UNIQUE,
-            user_karma VARCHAR(10) NOT NULL,
-            user_cake_day DATE NOT NULL,
-            post_karma VARCHAR(10) NOT NULL,
-            comment_karma VARCHAR(10) NOT NULL);""")
+        with open("sql/create_users_table.sql", "r") as sql_request:
+            self.cursor.execute(sql_request.read())
+
         self.connection.commit()
 
     def create_users_table(self):
-        self.cursor.execute("""CREATE TABLE IF NOT EXISTS posts(
-            post_id SMALLSERIAL PRIMARY KEY NOT NULL,
-            unique_id CHAR(32) UNIQUE NOT NULL,
-            post_url TEXT,
-            post_date DATE NOT NULL,
-            comments_number VARCHAR(10) NOT NULL,
-            votes_number VARCHAR(10) NOT NULL,
-            post_category VARCHAR(20) NOT NULL,
-            owner SMALLSERIAL REFERENCES users(user_id));""")
+        with open("sql/create_users_table.sql", "r") as sql_request:
+            self.cursor.execute(sql_request.read())
         self.connection.commit()
 
     def insert_parsed_post(self, post):
@@ -62,11 +51,13 @@ class PostgreSQLHandler:
                             (post['username'], post['user_karma'], post['user_cake_day'],
                              post['post_karma'], post['comment_karma']))
 
-        self.cursor.execute("INSERT INTO posts(unique_id, post_url, post_date, comments_number,"
-                            "votes_number, post_category, owner) VALUES"
-                            "(%s, %s, %s, %s, %s, %s, (SELECT user_id from users WHERE username=%s))",
-                            (post['unique_id'], post['post_url'], post['post_date'], post['comments_number'],
-                             post['votes_number'], post['post_category'], post['username']))
+        if not self.user_exists(post["username"]):
+            self.cursor.execute("INSERT INTO posts(unique_id, post_url, post_date, comments_number,"
+                                "votes_number, post_category, owner) VALUES"
+                                "(%s, %s, %s, %s, %s, %s, (SELECT user_id from users WHERE username=%s))",
+                                (post['unique_id'], post['post_url'], post['post_date'], post['comments_number'],
+                                 post['votes_number'], post['post_category'], post['username']))
+
         self.connection.commit()
 
     def delete_post(self, unique_id):
@@ -118,6 +109,10 @@ class PostgreSQLHandler:
         self.cursor.execute("SELECT count(*) FROM posts")
         return self.cursor.fetchall()[0][0]
 
+    def user_exists(self, username):
+        self.cursor.execute("SELECT * FROM users WHERE username=%s", username)
+        return self.cursor.fetchall()
+
     def close_connection(self):
         self.connection.close()
 
@@ -140,4 +135,3 @@ def convert_selected_data(row):
 
 if __name__ == '__main__':
     handler = PostgreSQLHandler()
-    handler.get_single_post("aaa")
