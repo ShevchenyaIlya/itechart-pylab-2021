@@ -4,9 +4,9 @@ import logging
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from typing import Tuple
 
-from .cache import Cache
-from .logging_converter import string_to_logging_level
-from .url_processing import find_matches, get_unique_id_from_url
+from assignment2.cache import Cache
+from assignment2.logging_converter import string_to_logging_level
+from assignment2.url_processing import find_matches, get_unique_id_from_url
 
 
 class CustomHTTPRequestHandler(BaseHTTPRequestHandler):

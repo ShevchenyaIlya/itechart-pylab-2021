@@ -1,5 +1,23 @@
 import os
 from datetime import datetime
+from typing import List
+
+def write_to_file(filename: str, data: List[str]) -> None:
+    with open(filename, "w") as file:
+        for serialize_post in data:
+            file.write(f"{serialize_post}{os.linesep}")
+
+
+def generate_filename() -> str:
+    current_date = datetime.now()
+    return f"reddit-{current_date.strftime('%Y%m%d%H%M')}.txt"
+
+
+def truncate_file_content(filename: str) -> None:
+    """Truncate content of file if file exist"""
+    if os.path.isfile(filename):
+        with open(filename, "w") as file:
+            file.truncate()
 
 
 def get_single_post(filename: str, unique_id: str) -> str or None:

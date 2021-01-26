@@ -5,6 +5,7 @@ import logging
 import argparse
 import aiohttp
 import dateparser
+import subprocess
 import json
 import time
 from typing import List, Dict, Tuple
@@ -16,14 +17,21 @@ from selenium.webdriver.support import expected_conditions
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 from selenium.common.exceptions import TimeoutException, StaleElementReferenceException
+from concurrent.futures.thread import ThreadPoolExecutor
 
 from assignment2.logging_converter import string_to_logging_level
 
 
-def write_to_file(filename: str, data: List[str]) -> None:
-    with open(filename, "w") as file:
-        for serialize_post in data:
-            file.write(f"{serialize_post}{os.linesep}")
+def find_chrome_driver() -> str:
+    p = subprocess.run("which -a chromedriver", shell=True, stdout=subprocess.PIPE)
+    return p.stdout.decode().rstrip(os.linesep)
+
+
+def load_xpath_templates_from_json():
+    with open('xpath_config.json') as json_file:
+        xpath_templates = json.load(json_file)
+
+    return xpath_templates
 
 
 def generate_uuid():
@@ -53,18 +61,6 @@ def config_browser(chrome_drive_path: str) -> webdriver.Chrome:
     return webdriver.Chrome(chrome_drive_path, options=options, desired_capabilities=caps)
 
 
-def generate_filename() -> str:
-    current_date = datetime.now()
-    return f"reddit-{current_date.strftime('%Y%m%d%H%M')}.txt"
-
-
-def truncate_file_content(filename: str) -> None:
-    """Truncate content of file if file exist"""
-    if os.path.isfile(filename):
-        with open(filename, "w") as file:
-            file.truncate()
-
-
 def get_posts_list(html, xpath_templates):
     soup = BeautifulSoup(html, "lxml")
     all_posts_html = soup.select_one(xpath_templates["all_posts_block"])
@@ -77,19 +73,6 @@ def config_logger(log_level: int) -> logging.Logger:
     logger = logging.getLogger("reddit_parser")
     logger.setLevel(log_level)
     return logger
-
-
-async def get_user_html_from_new_browser_tab(browser, user_page_url, xpath_templates):
-    browser.execute_script(f"window.open('{user_page_url}');")
-    await asyncio.sleep(1)
-    browser.switch_to.window(browser.window_handles[1])
-    user_page_html = browser.page_source
-    soup = BeautifulSoup(user_page_html, "lxml")
-    user_profile_info = soup.select_one(xpath_templates["user_profile_block"])
-
-    browser.close()
-    browser.switch_to.window(browser.window_handles[0])
-    return user_profile_info
 
 
 def parse_publication_date(tag_with_date):
@@ -144,30 +127,13 @@ def parse_main_page(current_post_info, post, post_id, logger, xpath_templates):
     return user_page_url
 
 
-async def parse_user_page(browser, user_page_url, current_post, logger, xpath_templates):
-    user_profile_info = await get_user_html_from_new_browser_tab(browser, user_page_url, xpath_templates)
-    try:
-        current_post["user_karma"] = user_profile_info.select_one(xpath_templates["user_karma"]).get_text()
-        user_cake_day = dateparser.parse(user_profile_info
-                                         .select_one(xpath_templates["user_cake_day"])
-                                         .get_text())
-
-        current_post["user_cake_day"] = str(user_cake_day.date())
-    except AttributeError:
-        logger.debug(f"Failed to access user(link: {user_page_url}) page due to age limit!")
-
-        return False, current_post
-
-    return True, current_post
-
-
 def navigate_popup_menu(browser, post_id, current_post_info, logger):
     popup_menu = browser.find_element_by_id(f"UserInfoTooltip--{post_id}")
     popup_menu = popup_menu.find_element_by_xpath("..")
     hover_current_post_element(browser, popup_menu)
 
     try:
-        popup_element = WebDriverWait(browser, 5).until(
+        popup_element = WebDriverWait(browser, 2).until(
             expected_conditions.presence_of_element_located((By.ID, f"UserInfoTooltip--{post_id}-hover-id"))
         )
         parse_popup_menu(current_post_info, popup_element)
@@ -188,25 +154,51 @@ def parse_popup_menu(current_post_info, popup_element):
     current_post_info["comment_karma"] = tags_with_numbers[2].select_one("div").get_text()
 
 
-async def start_user_parsing(browser, source, current_post, logger, xpath_templates):
+async def get_user_html_from_new_browser_tab(browser, user_page_url, xpath_templates):
+    browser.execute_script(f"window.open('{user_page_url}');")
+    await asyncio.sleep(1)
+    browser.switch_to.window(browser.window_handles[1])
+    user_page_html = browser.page_source
+    soup = BeautifulSoup(user_page_html, "lxml")
+    user_profile_info = soup.select_one(xpath_templates["user_profile_block"])
+
+    browser.close()
+    browser.switch_to.window(browser.window_handles[0])
+    return user_profile_info
+
+
+async def parse_user_page(browser, user_page_url, current_post, logger, xpath_templates):
+    user_profile_info = await get_user_html_from_new_browser_tab(browser, user_page_url, xpath_templates)
+    try:
+        current_post["user_karma"] = user_profile_info.select_one(xpath_templates["user_karma"]).get_text()
+        user_cake_day = dateparser.parse(user_profile_info
+                                         .select_one(xpath_templates["user_cake_day"])
+                                         .get_text())
+
+        current_post["user_cake_day"] = str(user_cake_day.date())
+    except AttributeError:
+        logger.debug(f"Failed to access user(link: {user_page_url}) page due to age limit!")
+
+        return False, current_post
+
+    return True, current_post
+
+
+async def start_user_parsing(browser, source, logger, xpath_templates):
     return await asyncio.gather(*[parse_user_page(browser, url, value, logger, xpath_templates)
-                                  for url, value in zip(source, current_post)])
+                                  for url, value in source])
 
 
 def parse_reddit_page(chrome_drive_path: str, post_count: int, logger: logging.Logger,
-                      xpath_templates: Dict[str, str]) -> None:
-    filename = generate_filename()
-    truncate_file_content(filename)
-    logger.info(f"The filename: {filename}!")
+                      xpath_templates: Dict[str, str], condition, parsing_queue) -> None:
+    logger.info(f"Start chrome driver!")
     browser = config_browser(chrome_drive_path)
-    parsed_information = []
-    user_source, saved_dicts = [], []
 
     try:
         browser.get("https://www.reddit.com/top/?t=month")
-        total_posts_count, addition_counter = 0, 0
+        total_posts_count = 0
 
-        while len(parsed_information) < post_count:
+        while condition["Parsed count"] < post_count:
             current_post_info = {}
             single_posts = get_posts_list(browser.page_source, xpath_templates)
             post = single_posts[total_posts_count]
@@ -226,24 +218,7 @@ def parse_reddit_page(chrome_drive_path: str, post_count: int, logger: logging.L
                 continue
 
             total_posts_count += 1
-            addition_counter += 1
-            user_source.append(user_page_url), saved_dicts.append(current_post_info)
-            if addition_counter == 10:
-                result = asyncio.run(start_user_parsing(browser, user_source, saved_dicts, logger, xpath_templates))
-                true_results = 0
-                send_now = []
-                for return_value, saved_dictionary in result:
-                    if return_value is True:
-                        true_results += 1
-                        saved_dictionary["unique_id"] = generate_uuid()
-                        parsed_information.append(saved_dictionary)
-                        send_now.append(saved_dictionary)
-                        logger.debug(
-                            f"All information has been received on this post(url: {saved_dictionary['post_url']})")
-                user_source.clear(), saved_dicts.clear()
-                asyncio.run(start_sending(send_now))
-                send_now.clear()
-                addition_counter = 0
+            parsing_queue.append([user_page_url, current_post_info])
         else:
             logger.info(f"{post_count} records were successfully placed in the file!")
 
@@ -251,10 +226,7 @@ def parse_reddit_page(chrome_drive_path: str, post_count: int, logger: logging.L
         logger.error(exception, exc_info=True)
     finally:
         browser.quit()
-        try:
-            asyncio.run(start_sending(parsed_information[:post_count]))
-        except aiohttp.ClientOSError:
-            pass
+        condition["Processing"] = False
 
 
 async def send_data(url, session, post):
@@ -271,7 +243,48 @@ async def start_sending(parsed_information):
             task = asyncio.ensure_future(send_data(url, session, post))
             tasks.append(task)
 
-        await asyncio.gather(*tasks)
+        return await asyncio.gather(*tasks)
+
+
+def parse_users_tabs(chrome_driver_path, post_count, logger, xpath_templates, condition, parsing_queue):
+    browser = config_browser(chrome_driver_path)
+    parsed_information = []
+    try:
+        while condition["Processing"] and condition["Parsed count"] <= post_count:
+            time.sleep(1)
+
+            if parsing_queue:
+                parsing_ready_posts = parsing_queue[:]
+                result = asyncio.run(start_user_parsing(browser, parsing_ready_posts, logger, xpath_templates))
+
+                for return_status, saved_dictionary in result:
+                    if return_status:
+                        saved_dictionary["unique_id"] = generate_uuid()
+                        parsed_information.append(saved_dictionary)
+                        condition["Parsed count"] += 1
+
+                        logger.debug(
+                            f"All information has been received on this post(url: {saved_dictionary['post_url']})"
+                        )
+
+                asyncio.run(start_sending(parsed_information))
+                parsed_information.clear()
+
+                for post in parsing_ready_posts:
+                    parsing_queue.remove(post)
+    except Exception as exception:
+        logger.error(exception, exc_info=True)
+    finally:
+        browser.quit()
+
+
+def scrape(executors, driver_path, post_count, logger, xpath_information, *, running_loop):
+    condition = {"Processing": True, "Parsed count": 0}
+    need_parsing = []
+    running_loop.run_in_executor(executors, parse_users_tabs, driver_path, post_count, logger, xpath_information,
+                                 condition, need_parsing)
+    running_loop.run_in_executor(executors, parse_reddit_page, driver_path, post_count, logger, xpath_information,
+                                 condition, need_parsing)
 
 
 def parse_command_line_arguments() -> Tuple[str, str, int]:
@@ -281,34 +294,25 @@ def parse_command_line_arguments() -> Tuple[str, str, int]:
     argument_parser.add_argument("--log_level", metavar="log_level", type=str, default="DEBUG",
                                  choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'],
                                  help="Minimal logging level('DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL')")
-    argument_parser.add_argument("--post_count", metavar="post_count", type=int, default=20,
+    argument_parser.add_argument("--post_count", metavar="post_count", type=int, default=10,
                                  choices=range(0, 101), help="Parsed post count")
     args = argument_parser.parse_args()
 
     return args.path, args.log_level, args.post_count
 
 
-def find_chrome_driver() -> str:
-    stream = os.popen('which -a chromedriver')
-    return stream.read().rstrip(os.linesep)
-
-
-def load_xpath_templates_from_json():
-    with open('xpath_config.json') as json_file:
-        xpath_templates = json.load(json_file)
-
-    return xpath_templates
-
-
 if __name__ == "__main__":
     chrome_driver, min_log_level, max_post_count = parse_command_line_arguments()
     configured_logger = config_logger(string_to_logging_level(min_log_level))
     xpath = load_xpath_templates_from_json()
+    executor = ThreadPoolExecutor(max_workers=20)
 
-    if os.path.isfile(chrome_driver):
-        start = time.time()
-        parse_reddit_page(chrome_driver, max_post_count, configured_logger, xpath)
-        print(time.time() - start, " seconds.")
-    else:
+    if not os.path.isfile(chrome_driver):
         configured_logger.error(f"Chrome drive does not exists at this link: {chrome_driver}!")
-
+    else:
+        start = time.time()
+        loop = asyncio.get_event_loop()
+        scrape(executor, chrome_driver, max_post_count, configured_logger, xpath, running_loop=loop)
+        loop.run_until_complete(asyncio.gather(*asyncio.all_tasks(loop)))
+        executor.shutdown(True)
+        configured_logger.debug(f"Processing time: {time.time() - start} seconds")
