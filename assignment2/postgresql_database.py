@@ -18,6 +18,9 @@ class PostgreSQLHandler:
 
         self.create_tables()
 
+    def __del__(self):
+        self.close_connection()
+
     def create_tables(self):
         self.create_posts_table()
         self.create_users_table()
@@ -46,17 +49,17 @@ class PostgreSQLHandler:
         self.connection.commit()
 
     def insert_parsed_post(self, post):
-        self.cursor.execute("INSERT INTO users(username, user_karma, user_cake_day, post_karma, comment_karma) "
-                            "VALUES (%s, %s, %s, %s, %s);",
-                            (post['username'], post['user_karma'], post['user_cake_day'],
-                             post['post_karma'], post['comment_karma']))
-
         if not self.user_exists(post["username"]):
-            self.cursor.execute("INSERT INTO posts(unique_id, post_url, post_date, comments_number,"
-                                "votes_number, post_category, owner) VALUES"
-                                "(%s, %s, %s, %s, %s, %s, (SELECT user_id from users WHERE username=%s))",
-                                (post['unique_id'], post['post_url'], post['post_date'], post['comments_number'],
-                                 post['votes_number'], post['post_category'], post['username']))
+            self.cursor.execute("INSERT INTO users(username, user_karma, user_cake_day, post_karma, comment_karma) "
+                                "VALUES (%s, %s, %s, %s, %s);",
+                                (post['username'], post['user_karma'], post['user_cake_day'],
+                                 post['post_karma'], post['comment_karma']))
+
+        self.cursor.execute("INSERT INTO posts(unique_id, post_url, post_date, comments_number,"
+                            "votes_number, post_category, owner) VALUES"
+                            "(%s, %s, %s, %s, %s, %s, (SELECT user_id from users WHERE username=%s))",
+                            (post['unique_id'], post['post_url'], post['post_date'], post['comments_number'],
+                             post['votes_number'], post['post_category'], post['username']))
 
         self.connection.commit()
 
@@ -110,7 +113,7 @@ class PostgreSQLHandler:
         return self.cursor.fetchall()[0][0]
 
     def user_exists(self, username):
-        self.cursor.execute("SELECT * FROM users WHERE username=%s", username)
+        self.cursor.execute("SELECT * FROM users WHERE username=%s", (username,))
         return self.cursor.fetchall()
 
     def close_connection(self):
