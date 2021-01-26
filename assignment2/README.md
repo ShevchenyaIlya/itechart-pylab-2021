@@ -48,3 +48,7 @@ optional arguments:
                         'ERROR', 'CRITICAL')
 
 ```
+
+### How to connect to server?
+
+- Change setting in _db_connection_setting.json_ file for your own
