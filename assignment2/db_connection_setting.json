@@ -1,0 +1,7 @@
+{
+  "database": "reddit_posts",
+  "user": "ilya",
+  "password": "Sheva07012001",
+  "host": "127.0.0.1",
+  "port": "5432"
+}
