@@ -1,7 +1,7 @@
 {
-  "database": "reddit_posts",
-  "user": "ilya",
-  "password": "Sheva07012001",
+  "database": "reddit_db",
+  "user": "postgres",
+  "password": "postgres",
   "host": "127.0.0.1",
   "port": "5432"
 }
