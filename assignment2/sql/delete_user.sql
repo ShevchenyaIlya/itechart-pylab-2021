@@ -1,0 +1,1 @@
+DELETE FROM users WHERE user_id=(SELECT owner FROM posts WHERE unique_id=%s);

@@ -1,0 +1,1 @@
+DELETE FROM posts WHERE unique_id=%s;
