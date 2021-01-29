@@ -20,3 +20,6 @@ if [ "$?" -ne "0" ]; then
     echo "Fail when copy file hooks/.pre-commit-config.yaml"
     exit 1
 fi
+
+chmod +x config_database
+./config_database
