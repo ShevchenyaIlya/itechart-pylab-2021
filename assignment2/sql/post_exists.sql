@@ -1,0 +1,1 @@
+SELECT exists(SELECT post_id FROM posts WHERE unique_id=%s);
