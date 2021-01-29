@@ -18,10 +18,23 @@ def load_query(filename):
 
 
 def load_sql_queries():
-    query_files = ["sql/create_posts_table.sql", "sql/create_users_table.sql"]
+    query_files = [
+        "sql/create_posts_table.sql",
+        "sql/create_users_table.sql",
+        "sql/insert_post.sql",
+        "sql/insert_user.sql",
+        "sql/delete_post.sql",
+        "sql/delete_user.sql",
+        "sql/update_user.sql",
+        "sql/update_post.sql",
+        "sql/select_all_posts.sql",
+        "sql/select_one_post.sql",
+        "sql/row_count.sql",
+        "sql/user_exists.sql",
+    ]
     queries = {}
     for file in query_files:
-        queries[file.strip("/.sql")] = load_query(file)
+        queries[file.strip("sql").strip("./")] = load_query(file)
 
     return queries
 
@@ -63,8 +76,7 @@ class PostgreSQLHandler:
     def insert_parsed_post(self, post):
         if not self.user_exists(post["username"]):
             self.cursor.execute(
-                "INSERT INTO users(username, user_karma, user_cake_day, post_karma, comment_karma) "
-                "VALUES (%s, %s, %s, %s, %s);",
+                self.queries["insert_user"],
                 (
                     post["username"],
                     post["user_karma"],
@@ -75,9 +87,7 @@ class PostgreSQLHandler:
             )
 
         self.cursor.execute(
-            "INSERT INTO posts(unique_id, post_url, post_date, comments_number,"
-            "votes_number, post_category, owner) VALUES"
-            "(%s, %s, %s, %s, %s, %s, (SELECT user_id from users WHERE username=%s))",
+            self.queries["insert_post"],
             (
                 post["unique_id"],
                 post["post_url"],
@@ -92,26 +102,19 @@ class PostgreSQLHandler:
         self.connection.commit()
 
     def delete_post(self, unique_id):
-        self.cursor.execute("DELETE FROM posts WHERE unique_id=%s;", (unique_id,))
+        self.cursor.execute(self.queries["delete_post"], (unique_id,))
         self.connection.commit()
 
     def delete_user(self, unique_id):
         self.cursor.execute(
-            "DELETE FROM users WHERE user_id=(SELECT owner FROM posts WHERE unique_id=%s);",
+            self.queries["delete_user"],
             (unique_id,),
         )
         self.connection.commit()
 
     def update_post(self, post):
         self.cursor.execute(
-            "UPDATE posts "
-            "SET post_date = %s,"
-            "post_url = %s,"
-            "comments_number = %s,"
-            "votes_number = %s,"
-            "post_category = %s,"
-            "owner = (SELECT user_id from users WHERE username=%s)"
-            "WHERE unique_id=%s;",
+            self.queries["update_post"],
             (
                 post["post_date"],
                 post["post_url"],
@@ -126,12 +129,7 @@ class PostgreSQLHandler:
 
     def update_user(self, post):
         self.cursor.execute(
-            "UPDATE users "
-            "SET user_karma = %s,"
-            "user_cake_day = %s,"
-            "post_karma = %s,"
-            "comment_karma = %s "
-            "WHERE username=%s;",
+            self.queries["update_user"],
             (
                 post["user_karma"],
                 post["user_cake_day"],
@@ -143,15 +141,13 @@ class PostgreSQLHandler:
         self.connection.commit()
 
     def get_all_posts(self):
-        self.cursor.execute(
-            "SELECT * FROM posts INNER JOIN users ON (posts.owner=users.user_id);"
-        )
+        self.cursor.execute(self.queries["select_all_posts"])
         rows = self.cursor.fetchall()
         return [convert_selected_data(row) for row in rows]
 
     def get_single_post(self, unique_id):
         self.cursor.execute(
-            "SELECT * FROM posts INNER JOIN users ON (posts.owner=users.user_id) WHERE unique_id=%s;",
+            self.queries["select_one_post"],
             (unique_id,),
         )
         row = self.cursor.fetchall()
@@ -159,11 +155,11 @@ class PostgreSQLHandler:
             return convert_selected_data(row[0])
 
     def row_count(self):
-        self.cursor.execute("SELECT count(*) FROM posts")
+        self.cursor.execute(self.queries["row_count"])
         return self.cursor.fetchall()[0][0]
 
     def user_exists(self, username):
-        self.cursor.execute("SELECT * FROM users WHERE username=%s", (username,))
+        self.cursor.execute(self.queries["user_exists"], (username,))
         return self.cursor.fetchall()
 
     def close_connection(self):
@@ -172,7 +168,7 @@ class PostgreSQLHandler:
 
 def convert_selected_data(row):
     return {
-        "unique_id": row[1],
+        "unique_id": row[1].replace("-", ""),
         "post_url": row[2],
         "username": row[9],
         "user_karma": row[10],
@@ -188,3 +184,4 @@ def convert_selected_data(row):
 
 if __name__ == "__main__":
     handler = PostgreSQLHandler()
+    load_sql_queries()
