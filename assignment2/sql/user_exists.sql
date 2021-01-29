@@ -1,1 +1,1 @@
-SELECT * FROM users WHERE username=%s;
+SELECT exists(SELECT user_id FROM users WHERE username=%s);
