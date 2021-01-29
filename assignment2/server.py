@@ -5,6 +5,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from typing import Tuple
 
 from assignment2.cache import Cache
+from assignment2.convert_karma import convert_post_numeric_fields
 from assignment2.logging_converter import string_to_logging_level
 from assignment2.postgresql_database import PostgreSQLHandler
 from assignment2.url_processing import find_matches, get_unique_id_from_url
@@ -98,6 +99,7 @@ class CustomHTTPRequestHandler(BaseHTTPRequestHandler):
         if self.database_handler.is_exist(unique_id):
             return 200, "OK"
         else:
+            convert_post_numeric_fields(post_data)
             self.database_handler.insert_parsed_post(post_data)
             line_number = self.database_handler.row_count()
             return 201, "Created", {unique_id: line_number}
@@ -114,6 +116,7 @@ class CustomHTTPRequestHandler(BaseHTTPRequestHandler):
         if not self.database_handler.is_exist(unique_id):
             return 205, "No Content"
         else:
+            convert_post_numeric_fields(post_data)
             self.database_handler.update(post_data)
             return 200, "OK"
 
