@@ -31,6 +31,7 @@ def load_sql_queries():
         "sql/select_one_post.sql",
         "sql/row_count.sql",
         "sql/user_exists.sql",
+        "sql/post_exists.sql",
     ]
     queries = {}
     for file in query_files:
@@ -58,7 +59,7 @@ class PostgreSQLHandler:
         self.update_user(post)
 
     def delete(self, unique_id):
-        if self.get_single_post(unique_id):
+        if self.is_exist(unique_id):
             self.delete_post(unique_id)
             self.delete_user(unique_id)
             return True
@@ -158,9 +159,13 @@ class PostgreSQLHandler:
         self.cursor.execute(self.queries["row_count"])
         return self.cursor.fetchall()[0][0]
 
+    def is_exist(self, unique_id):
+        self.cursor.execute(self.queries["post_exists"], (unique_id,))
+        return self.cursor.fetchall()[0][0]
+
     def user_exists(self, username):
         self.cursor.execute(self.queries["user_exists"], (username,))
-        return self.cursor.fetchall()
+        return self.cursor.fetchall()[0][0]
 
     def close_connection(self):
         self.connection.close()
