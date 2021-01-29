@@ -21,7 +21,12 @@ http://localhost:8087/, which in turn provides a simple API for working with bas
 chmod +x setup.sh
 ```
 
-- Run _setup.sh_ to copy hooks
+- Run _setup.sh_ to copy hooks, install and config postgresql
 ```bash
 ./setup.sh
 ```
+
+### PostgreSQL basic connection
+- name: reddit_db
+- username: postgres
+- password: postgres
