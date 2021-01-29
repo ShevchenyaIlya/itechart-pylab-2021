@@ -1,8 +1,25 @@
 #!/bin/bash
 
 sudo apt install postgresql postgresql-contrib
-sudo -u postgres createuser postgres
-sudo -u postgres psql -c "ALTER USER postgres WITH PASSWORD 'postgres';"
-sudo -u postgres createdb reddit_db
-sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE reddit_db TO postgres;"
+sudo -u postgres createuser postgres_1
+sudo -u postgres psql -c "ALTER USER postgres_1 WITH PASSWORD 'postgres';"
+sudo -u postgres createdb reddit_db_1
+sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE reddit_db_1 TO postgres_1;"
 
+sudo -u postgres psql reddit_db_1 -c "CREATE TABLE IF NOT EXISTS users(
+    user_id BIGSERIAL PRIMARY KEY NOT NULL,
+    username VARCHAR(50) UNIQUE,
+    user_karma BIGINT NOT NULL,
+    user_cake_day DATE NOT NULL,
+    post_karma BIGINT NOT NULL,
+    comment_karma BIGINT NOT NULL);"
+
+sudo -u postgres psql reddit_db_1 -c "CREATE TABLE IF NOT EXISTS posts(
+    post_id BIGSERIAL PRIMARY KEY NOT NULL,
+    unique_id uuid UNIQUE NOT NULL,
+    post_url TEXT,
+    post_date DATE NOT NULL,
+    comments_number BIGINT NOT NULL,
+    votes_number BIGINT NOT NULL,
+    post_category VARCHAR(20) NOT NULL,
+    owner BIGSERIAL REFERENCES users(user_id));"
