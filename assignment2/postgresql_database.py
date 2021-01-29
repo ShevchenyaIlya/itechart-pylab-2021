@@ -17,42 +17,13 @@ def load_query(filename):
         return sql_query.read()
 
 
-def load_sql_queries():
-    query_files = [
-        "sql/create_posts_table.sql",
-        "sql/create_users_table.sql",
-        "sql/insert_post.sql",
-        "sql/insert_user.sql",
-        "sql/delete_post.sql",
-        "sql/delete_user.sql",
-        "sql/update_user.sql",
-        "sql/update_post.sql",
-        "sql/select_all_posts.sql",
-        "sql/select_one_post.sql",
-        "sql/row_count.sql",
-        "sql/user_exists.sql",
-        "sql/post_exists.sql",
-    ]
-    queries = {}
-    for file in query_files:
-        queries[file.strip("sql").strip("./")] = load_query(file)
-
-    return queries
-
-
 class PostgreSQLHandler:
     def __init__(self):
         self.connection = database_connection(load_database_connection_settings())
         self.cursor = self.connection.cursor()
-        self.queries = load_sql_queries()
-        self.create_tables()
 
     def __del__(self):
         self.close_connection()
-
-    def create_tables(self):
-        self.create_users_table()
-        self.create_posts_table()
 
     def update(self, post):
         self.update_post(post)
@@ -66,18 +37,10 @@ class PostgreSQLHandler:
 
         return False
 
-    def create_posts_table(self):
-        self.cursor.execute(self.queries["create_posts_table"])
-        self.connection.commit()
-
-    def create_users_table(self):
-        self.cursor.execute(self.queries["create_users_table"])
-        self.connection.commit()
-
     def insert_parsed_post(self, post):
         if not self.user_exists(post["username"]):
             self.cursor.execute(
-                self.queries["insert_user"],
+                load_query("sql/insert_user.sql"),
                 (
                     post["username"],
                     post["user_karma"],
@@ -88,7 +51,7 @@ class PostgreSQLHandler:
             )
 
         self.cursor.execute(
-            self.queries["insert_post"],
+            load_query("sql/insert_post.sql"),
             (
                 post["unique_id"],
                 post["post_url"],
@@ -103,19 +66,19 @@ class PostgreSQLHandler:
         self.connection.commit()
 
     def delete_post(self, unique_id):
-        self.cursor.execute(self.queries["delete_post"], (unique_id,))
+        self.cursor.execute(load_query("sql/delete_post.sql"), (unique_id,))
         self.connection.commit()
 
     def delete_user(self, unique_id):
         self.cursor.execute(
-            self.queries["delete_user"],
+            load_query("sql/delete_user.sql"),
             (unique_id,),
         )
         self.connection.commit()
 
     def update_post(self, post):
         self.cursor.execute(
-            self.queries["update_post"],
+            load_query("sql/update_post.sql"),
             (
                 post["post_date"],
                 post["post_url"],
@@ -130,7 +93,7 @@ class PostgreSQLHandler:
 
     def update_user(self, post):
         self.cursor.execute(
-            self.queries["update_user"],
+            load_query("sql/update_user.sql"),
             (
                 post["user_karma"],
                 post["user_cake_day"],
@@ -142,29 +105,31 @@ class PostgreSQLHandler:
         self.connection.commit()
 
     def get_all_posts(self):
-        self.cursor.execute(self.queries["select_all_posts"])
+        self.cursor.execute(load_query("sql/select_all_posts.sql"))
         rows = self.cursor.fetchall()
+
         return [convert_selected_data(row) for row in rows]
 
     def get_single_post(self, unique_id):
         self.cursor.execute(
-            self.queries["select_one_post"],
+            load_query("sql/select_one_post.sql"),
             (unique_id,),
         )
+
         row = self.cursor.fetchall()
         if row:
             return convert_selected_data(row[0])
 
     def row_count(self):
-        self.cursor.execute(self.queries["row_count"])
+        self.cursor.execute(load_query("sql/row_count.sql"))
         return self.cursor.fetchall()[0][0]
 
     def is_exist(self, unique_id):
-        self.cursor.execute(self.queries["post_exists"], (unique_id,))
+        self.cursor.execute(load_query("sql/post_exists.sql"), (unique_id,))
         return self.cursor.fetchall()[0][0]
 
     def user_exists(self, username):
-        self.cursor.execute(self.queries["user_exists"], (username,))
+        self.cursor.execute(load_query("sql/user_exists.sql"), (username,))
         return self.cursor.fetchall()[0][0]
 
     def close_connection(self):
@@ -189,4 +154,3 @@ def convert_selected_data(row):
 
 if __name__ == "__main__":
     handler = PostgreSQLHandler()
-    load_sql_queries()
