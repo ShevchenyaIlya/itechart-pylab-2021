@@ -1,0 +1,14 @@
+#!/bin/bash
+
+if [[ $(which psql) == "" ]]
+then
+  echo "Install postgresql (use: 'sudo apt install postgresql postgresql-contrib')"
+  exit 1
+fi
+
+sudo -u postgres createuser postgres
+sudo -u postgres psql -c "ALTER USER postgres WITH PASSWORD 'postgres';"
+sudo -u postgres createdb reddit_db
+sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE reddit_db TO postgres;"
+
+sudo -u postgres psql reddit_db -f scripts/create_tables.sql
