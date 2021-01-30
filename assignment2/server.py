@@ -5,8 +5,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from typing import Tuple
 
 from assignment2.cache import Cache
-from assignment2.convert_karma import convert_post_numeric_fields
-from assignment2.logging_converter import string_to_logging_level
+from assignment2.converters import convert_post_numeric_fields, string_to_logging_level
 from assignment2.postgresql_database import PostgreSQLHandler
 from assignment2.url_processing import find_matches, get_unique_id_from_url
 

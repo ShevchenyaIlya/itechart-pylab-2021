@@ -157,7 +157,3 @@ def convert_selected_data(row):
         "votes_number": row[5],
         "post_category": row[6],
     }
-
-
-if __name__ == "__main__":
-    handler = PostgreSQLHandler()

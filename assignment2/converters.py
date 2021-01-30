@@ -1,3 +1,18 @@
+import logging
+
+
+def string_to_logging_level(log_level: str) -> int:
+    possible_levels = {
+        "DEBUG": logging.DEBUG,
+        "INFO": logging.INFO,
+        "WARNING": logging.WARNING,
+        "ERROR": logging.ERROR,
+        "CRITICAL": logging.CRITICAL,
+    }
+
+    return possible_levels[log_level]
+
+
 def convert_post_numeric_fields(post_data: dict):
     need_convert = [
         "user_karma",
@@ -22,7 +37,3 @@ def convert_post_field(karma: str) -> int:
         number = int(karma)
 
     return number
-
-
-if __name__ == "__main__":
-    print(convert_post_field("1,233m"))
