@@ -66,11 +66,6 @@ def modify_post(filename: str, unique_id: str, post_data: dict) -> bool:
     return False
 
 
-def generate_filename() -> str:
-    current_date = datetime.now()
-    return f"reddit-{current_date.strftime('%Y%m%d')}.txt"
-
-
 def file_exist(filename: str) -> bool:
     if os.path.isfile(filename):
         return True

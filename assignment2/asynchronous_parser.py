@@ -1,25 +1,26 @@
-import asyncio
-import os
-import uuid
-import logging
 import argparse
+import asyncio
+import json
+import logging
+import os
+import subprocess
+import time
+import uuid
+from concurrent.futures.thread import ThreadPoolExecutor
+from datetime import datetime, timedelta
+from typing import Dict, List, Tuple
+
 import aiohttp
 import dateparser
-import subprocess
-import json
-import time
-from typing import List, Dict, Tuple
-from datetime import datetime, timedelta
 from bs4 import BeautifulSoup
 from selenium import webdriver
+from selenium.common.exceptions import StaleElementReferenceException, TimeoutException
 from selenium.webdriver.common.by import By
+from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 from selenium.webdriver.support import expected_conditions
 from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
-from selenium.common.exceptions import TimeoutException, StaleElementReferenceException
-from concurrent.futures.thread import ThreadPoolExecutor
 
-from assignment2.logging_converter import string_to_logging_level
+from assignment2.converters import string_to_logging_level
 
 
 def find_chrome_driver() -> str:
@@ -28,7 +29,7 @@ def find_chrome_driver() -> str:
 
 
 def load_xpath_templates_from_json():
-    with open('xpath_config.json') as json_file:
+    with open("xpath_config.json") as json_file:
         xpath_templates = json.load(json_file)
 
     return xpath_templates
@@ -39,8 +40,18 @@ def generate_uuid():
 
 
 def serialize_output_string(parsed_data: Dict[str, str]) -> str:
-    sequence = ["post_url", "username", "user_karma", "user_cake_day", "post_karma", "comment_karma",
-                "post_date", "comments_number", "votes_number", "post_category"]
+    sequence = [
+        "post_url",
+        "username",
+        "user_karma",
+        "user_cake_day",
+        "post_karma",
+        "comment_karma",
+        "post_date",
+        "comments_number",
+        "votes_number",
+        "post_category",
+    ]
 
     output_string = generate_uuid()
     for field in sequence:
@@ -53,12 +64,14 @@ def config_browser(chrome_drive_path: str) -> webdriver.Chrome:
     caps = DesiredCapabilities().CHROME
     caps["pageLoadStrategy"] = "normal"  # possible: "normal", "eagle", "none"
     options = webdriver.ChromeOptions()
-    options.add_argument('headless')
-    options.add_argument('window-size=1920x1080')
-    options.add_argument('--blink-settings=imagesEnabled=false')
-    options.add_argument('--no-proxy-server')
+    options.add_argument("headless")
+    options.add_argument("window-size=1920x1080")
+    options.add_argument("--blink-settings=imagesEnabled=false")
+    options.add_argument("--no-proxy-server")
 
-    return webdriver.Chrome(chrome_drive_path, options=options, desired_capabilities=caps)
+    return webdriver.Chrome(
+        chrome_drive_path, options=options, desired_capabilities=caps
+    )
 
 
 def get_posts_list(html, xpath_templates):
@@ -83,14 +96,21 @@ def parse_publication_date(tag_with_date):
 
 
 def parse_comment_number(post, xpath_templates):
-    comments_number = post.select_one(xpath_templates["comments_number_inside_post"]).find_all(recursive=False)[-1]
+    comments_number = post.select_one(
+        xpath_templates["comments_number_inside_post"]
+    ).find_all(recursive=False)[-1]
     comments_number = comments_number.select("a > span")
 
     # Representation may have distinct html formats
     if len(comments_number) == 1:
         return comments_number[0].get_text().split(" ")[0]
     else:
-        return comments_number[0].select_one("div").find_all(recursive=False)[-1].get_text()
+        return (
+            comments_number[0]
+            .select_one("div")
+            .find_all(recursive=False)[-1]
+            .get_text()
+        )
 
 
 def hover_current_post_element(browser, element):
@@ -99,23 +119,36 @@ def hover_current_post_element(browser, element):
 
 
 def parse_main_page(current_post_info, post, post_id, logger, xpath_templates):
-    current_post_info["votes_number"] = post.select_one(xpath_templates["votes_number_inside_post"]).get_text()
+    current_post_info["votes_number"] = post.select_one(
+        xpath_templates["votes_number_inside_post"]
+    ).get_text()
 
-    top_post_html_source = post.select_one(xpath_templates["top_post_line_block"]).findChildren(recursive=False)[0]
+    top_post_html_source = post.select_one(
+        xpath_templates["top_post_line_block"]
+    ).findChildren(recursive=False)[0]
     if top_post_html_source.name == "article":
-        top_post_html_source = top_post_html_source.select_one(xpath_templates["article_shell"])
+        top_post_html_source = top_post_html_source.select_one(
+            xpath_templates["article_shell"]
+        )
     else:
-        top_post_html_source = top_post_html_source.select_one(xpath_templates["div_shell"])
+        top_post_html_source = top_post_html_source.select_one(
+            xpath_templates["div_shell"]
+        )
 
     all_a_tags_inside_block = top_post_html_source.find_all("a")
     current_post_info["post_url"] = all_a_tags_inside_block[-1]["href"]
-    current_post_info["post_category"] = top_post_html_source.select_one(xpath_templates["post_category"])\
-        .get_text().lstrip("r/")
+    current_post_info["post_category"] = (
+        top_post_html_source.select_one(xpath_templates["post_category"])
+        .get_text()
+        .lstrip("r/")
+    )
 
     # User deleted
     if len(all_a_tags_inside_block) == 2:
-        logger.debug(f"The post (post_id: {post_id}, url: {current_post_info['post_url']}) "
-                     f"exists, but the user has been deleted!")
+        logger.debug(
+            f"The post (post_id: {post_id}, url: {current_post_info['post_url']}) "
+            f"exists, but the user has been deleted!"
+        )
         return None
 
     name_parse_string = all_a_tags_inside_block[1]
@@ -134,24 +167,32 @@ def navigate_popup_menu(browser, post_id, current_post_info, logger):
 
     try:
         popup_element = WebDriverWait(browser, 2).until(
-            expected_conditions.presence_of_element_located((By.ID, f"UserInfoTooltip--{post_id}-hover-id"))
+            expected_conditions.presence_of_element_located(
+                (By.ID, f"UserInfoTooltip--{post_id}-hover-id")
+            )
         )
         parse_popup_menu(current_post_info, popup_element)
     except (TimeoutException, StaleElementReferenceException):
-        logger.debug(f"Popup menu does not appear for this post(url: {current_post_info['post_url']}).")
+        logger.debug(
+            f"Popup menu does not appear for this post(url: {current_post_info['post_url']})."
+        )
         return None
 
     return popup_element
 
 
 def parse_popup_menu(current_post_info, popup_element):
-    popup_menu_info = BeautifulSoup(popup_element.get_attribute("innerHTML"), "html.parser")\
-        .findChildren(recursive=False)[-2]\
+    popup_menu_info = (
+        BeautifulSoup(popup_element.get_attribute("innerHTML"), "html.parser")
+        .findChildren(recursive=False)[-2]
         .findChildren(recursive=False)[-3]
+    )
 
     tags_with_numbers = list(popup_menu_info.children)
     current_post_info["post_karma"] = tags_with_numbers[1].select_one("div").get_text()
-    current_post_info["comment_karma"] = tags_with_numbers[2].select_one("div").get_text()
+    current_post_info["comment_karma"] = (
+        tags_with_numbers[2].select_one("div").get_text()
+    )
 
 
 async def get_user_html_from_new_browser_tab(browser, user_page_url, xpath_templates):
@@ -167,17 +208,25 @@ async def get_user_html_from_new_browser_tab(browser, user_page_url, xpath_templ
     return user_profile_info
 
 
-async def parse_user_page(browser, user_page_url, current_post, logger, xpath_templates):
-    user_profile_info = await get_user_html_from_new_browser_tab(browser, user_page_url, xpath_templates)
+async def parse_user_page(
+    browser, user_page_url, current_post, logger, xpath_templates
+):
+    user_profile_info = await get_user_html_from_new_browser_tab(
+        browser, user_page_url, xpath_templates
+    )
     try:
-        current_post["user_karma"] = user_profile_info.select_one(xpath_templates["user_karma"]).get_text()
-        user_cake_day = dateparser.parse(user_profile_info
-                                         .select_one(xpath_templates["user_cake_day"])
-                                         .get_text())
+        current_post["user_karma"] = user_profile_info.select_one(
+            xpath_templates["user_karma"]
+        ).get_text()
+        user_cake_day = dateparser.parse(
+            user_profile_info.select_one(xpath_templates["user_cake_day"]).get_text()
+        )
 
         current_post["user_cake_day"] = str(user_cake_day.date())
     except AttributeError:
-        logger.debug(f"Failed to access user(link: {user_page_url}) page due to age limit!")
+        logger.debug(
+            f"Failed to access user(link: {user_page_url}) page due to age limit!"
+        )
 
         return False, current_post
 
@@ -185,12 +234,22 @@ async def parse_user_page(browser, user_page_url, current_post, logger, xpath_te
 
 
 async def start_user_parsing(browser, source, logger, xpath_templates):
-    return await asyncio.gather(*[parse_user_page(browser, url, value, logger, xpath_templates)
-                                  for url, value in source])
+    return await asyncio.gather(
+        *[
+            parse_user_page(browser, url, value, logger, xpath_templates)
+            for url, value in source
+        ]
+    )
 
 
-def parse_reddit_page(chrome_drive_path: str, post_count: int, logger: logging.Logger,
-                      xpath_templates: Dict[str, str], condition, parsing_queue) -> None:
+def parse_reddit_page(
+    chrome_drive_path: str,
+    post_count: int,
+    logger: logging.Logger,
+    xpath_templates: Dict[str, str],
+    condition,
+    parsing_queue,
+) -> None:
     logger.info(f"Start chrome driver!")
     browser = config_browser(chrome_drive_path)
 
@@ -207,12 +266,16 @@ def parse_reddit_page(chrome_drive_path: str, post_count: int, logger: logging.L
             current_post = browser.find_element_by_id(post_id)
             hover_current_post_element(browser, current_post)
 
-            user_page_url = parse_main_page(current_post_info, post, post_id, logger, xpath_templates)
+            user_page_url = parse_main_page(
+                current_post_info, post, post_id, logger, xpath_templates
+            )
             if user_page_url is None:
                 total_posts_count += 1
                 continue
 
-            popup_element = navigate_popup_menu(browser, post_id, current_post_info, logger)
+            popup_element = navigate_popup_menu(
+                browser, post_id, current_post_info, logger
+            )
             if popup_element is None:
                 total_posts_count += 1
                 continue
@@ -246,7 +309,9 @@ async def start_sending(parsed_information):
         return await asyncio.gather(*tasks)
 
 
-def parse_users_tabs(chrome_driver_path, post_count, logger, xpath_templates, condition, parsing_queue):
+def parse_users_tabs(
+    chrome_driver_path, post_count, logger, xpath_templates, condition, parsing_queue
+):
     browser = config_browser(chrome_driver_path)
     parsed_information = []
     try:
@@ -255,7 +320,11 @@ def parse_users_tabs(chrome_driver_path, post_count, logger, xpath_templates, co
 
             if parsing_queue:
                 parsing_ready_posts = parsing_queue[:]
-                result = asyncio.run(start_user_parsing(browser, parsing_ready_posts, logger, xpath_templates))
+                result = asyncio.run(
+                    start_user_parsing(
+                        browser, parsing_ready_posts, logger, xpath_templates
+                    )
+                )
 
                 for return_status, saved_dictionary in result:
                     if return_status:
@@ -278,24 +347,58 @@ def parse_users_tabs(chrome_driver_path, post_count, logger, xpath_templates, co
         browser.quit()
 
 
-def scrape(executors, driver_path, post_count, logger, xpath_information, *, running_loop):
+def scrape(
+    executors, driver_path, post_count, logger, xpath_information, *, running_loop
+):
     condition = {"Processing": True, "Parsed count": 0}
     need_parsing = []
-    running_loop.run_in_executor(executors, parse_users_tabs, driver_path, post_count, logger, xpath_information,
-                                 condition, need_parsing)
-    running_loop.run_in_executor(executors, parse_reddit_page, driver_path, post_count, logger, xpath_information,
-                                 condition, need_parsing)
+    running_loop.run_in_executor(
+        executors,
+        parse_users_tabs,
+        driver_path,
+        post_count,
+        logger,
+        xpath_information,
+        condition,
+        need_parsing,
+    )
+    running_loop.run_in_executor(
+        executors,
+        parse_reddit_page,
+        driver_path,
+        post_count,
+        logger,
+        xpath_information,
+        condition,
+        need_parsing,
+    )
 
 
 def parse_command_line_arguments() -> Tuple[str, str, int]:
     argument_parser = argparse.ArgumentParser(description="Reddit parser")
-    argument_parser.add_argument("--path", metavar="path", type=str, help="Chromedriver path",
-                                 default=find_chrome_driver())
-    argument_parser.add_argument("--log_level", metavar="log_level", type=str, default="DEBUG",
-                                 choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'],
-                                 help="Minimal logging level('DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL')")
-    argument_parser.add_argument("--post_count", metavar="post_count", type=int, default=10,
-                                 choices=range(0, 101), help="Parsed post count")
+    argument_parser.add_argument(
+        "--path",
+        metavar="path",
+        type=str,
+        help="Chromedriver path",
+        default=find_chrome_driver(),
+    )
+    argument_parser.add_argument(
+        "--log_level",
+        metavar="log_level",
+        type=str,
+        default="DEBUG",
+        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
+        help="Minimal logging level('DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL')",
+    )
+    argument_parser.add_argument(
+        "--post_count",
+        metavar="post_count",
+        type=int,
+        default=10,
+        choices=range(0, 101),
+        help="Parsed post count",
+    )
     args = argument_parser.parse_args()
 
     return args.path, args.log_level, args.post_count
@@ -308,11 +411,20 @@ if __name__ == "__main__":
     executor = ThreadPoolExecutor(max_workers=20)
 
     if not os.path.isfile(chrome_driver):
-        configured_logger.error(f"Chrome drive does not exists at this link: {chrome_driver}!")
+        configured_logger.error(
+            f"Chrome drive does not exists at this link: {chrome_driver}!"
+        )
     else:
         start = time.time()
         loop = asyncio.get_event_loop()
-        scrape(executor, chrome_driver, max_post_count, configured_logger, xpath, running_loop=loop)
+        scrape(
+            executor,
+            chrome_driver,
+            max_post_count,
+            configured_logger,
+            xpath,
+            running_loop=loop,
+        )
         loop.run_until_complete(asyncio.gather(*asyncio.all_tasks(loop)))
         executor.shutdown(True)
         configured_logger.debug(f"Processing time: {time.time() - start} seconds")
