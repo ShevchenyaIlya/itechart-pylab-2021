@@ -21,5 +21,5 @@ if [ "$?" -ne "0" ]; then
     exit 1
 fi
 
-chmod +x config_database
-./config_database
+chmod +x scripts/config_database
+./scripts/config_database
