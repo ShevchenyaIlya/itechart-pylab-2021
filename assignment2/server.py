@@ -6,13 +6,13 @@ from typing import Tuple
 
 from assignment2.cache import Cache
 from assignment2.converters import convert_post_numeric_fields, string_to_logging_level
-from assignment2.postgresql_database import PostgreSQLHandler
+from assignment2.mongodb import MongoDBHandler
 from assignment2.url_processing import find_matches, get_unique_id_from_url
 
 
 class CustomHTTPRequestHandler(BaseHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
-        self.database_handler = PostgreSQLHandler()
+        self.database_handler = MongoDBHandler()
         self.possible_endpoints = {
             ("GET", r"/posts/?"): self.get_all_posts_request,
             ("GET", r"/posts/.{32}/?"): self.get_single_post_request,
@@ -81,12 +81,12 @@ class CustomHTTPRequestHandler(BaseHTTPRequestHandler):
             self._set_response(404, "Not Found")
 
     def get_all_posts_request(self) -> Tuple[int, str, list]:
-        db_content = self.database_handler.get_all_posts()
+        db_content = self.database_handler.select_all_posts()
         return 200, "OK", db_content
 
     def get_single_post_request(self):
         unique_id = get_unique_id_from_url(self.path)
-        post = self.database_handler.get_single_post(unique_id)
+        post = self.database_handler.select_single_post(unique_id)
 
         if post is not None:
             return 200, "OK", post
@@ -95,12 +95,12 @@ class CustomHTTPRequestHandler(BaseHTTPRequestHandler):
 
     def post_request(self, post_data: dict):
         unique_id = post_data["unique_id"]
-        if self.database_handler.is_exist(unique_id):
+        if self.database_handler.post_exist(unique_id):
             return 200, "OK"
         else:
             convert_post_numeric_fields(post_data)
-            self.database_handler.insert_parsed_post(post_data)
-            line_number = self.database_handler.row_count()
+            self.database_handler.insert(post_data)
+            line_number = self.database_handler.document_count()
             return 201, "Created", {unique_id: line_number}
 
     def delete_request(self) -> Tuple[int, str]:
@@ -112,7 +112,7 @@ class CustomHTTPRequestHandler(BaseHTTPRequestHandler):
 
     def put_request(self, post_data: dict) -> Tuple[int, str]:
         unique_id = get_unique_id_from_url(self.path)
-        if not self.database_handler.is_exist(unique_id):
+        if not self.database_handler.post_exist(unique_id):
             return 205, "No Content"
         else:
             convert_post_numeric_fields(post_data)
