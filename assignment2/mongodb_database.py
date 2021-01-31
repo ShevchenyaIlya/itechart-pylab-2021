@@ -42,6 +42,7 @@ class MongoDBHandler:
         self.db.posts.insert_one(post_data)
 
     def update(self, post):
+        convert_string_to_date(post)
         post_data, user_data = split_post(post)
 
         self.update_post(post_data)
