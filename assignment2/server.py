@@ -4,9 +4,8 @@ import logging
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from typing import Tuple
 
-from assignment2.cache import Cache
 from assignment2.converters import convert_post_numeric_fields, string_to_logging_level
-from assignment2.mongodb import MongoDBHandler
+from assignment2.mongodb_database import MongoDBHandler
 from assignment2.url_processing import find_matches, get_unique_id_from_url
 
 
