@@ -1,4 +1,17 @@
 import logging
+from datetime import datetime
+
+_date_fields = ["user_cake_day", "post_date"]
+
+
+def convert_string_to_date(post):
+    for date in _date_fields:
+        post[date] = datetime.strptime(post[date], "%Y-%m-%d")
+
+
+def convert_date_to_string(post):
+    for date in _date_fields:
+        post[date] = post[date].strftime("%Y-%m-%d")
 
 
 def string_to_logging_level(log_level: str) -> int:
