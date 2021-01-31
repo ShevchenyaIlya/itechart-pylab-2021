@@ -21,12 +21,13 @@ http://localhost:8087/, which in turn provides a simple API for working with bas
 chmod +x setup.sh
 ```
 
-- Run _setup.sh_ to copy hooks, install and config postgresql
+- Run _setup.sh_ to copy hooks, install and config MongoDB
 ```bash
 ./setup.sh
 ```
 
-### PostgreSQL basic connection
-- name: reddit_db
-- username: postgres
-- password: postgres
+### MongoDB
+##### Latest version of MongoDB installed after running setup.sh
+##### After installation use: 
+- start MongoDB - 'sudo systemctl start mongod'
+- stop MongoDB - 'sudo systemctl stop mongod'
