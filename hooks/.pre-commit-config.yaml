@@ -1,14 +1,13 @@
 # .pre-commit-config.yaml
 
 # isort
-- repo: https://github.com/asottile/seed-isort-config
-  rev: v1.9.3
-  hooks:
-  - id: seed-isort-config
-- repo: https://github.com/pre-commit/mirrors-isort
-  rev: v4.3.21
+- repo: https://github.com/pycqa/isort
+  rev: 5.7.0
   hooks:
   - id: isort
+    args:
+      - "--profile"
+      - "black"
 
 # black
 - repo: https://github.com/ambv/black
