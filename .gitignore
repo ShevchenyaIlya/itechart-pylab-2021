@@ -13,3 +13,4 @@ venv/
 *.cfg
 
 /.pre-commit-config.yaml
+/assignment2/selected_database.json
