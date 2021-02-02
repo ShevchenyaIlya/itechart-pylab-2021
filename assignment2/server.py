@@ -6,6 +6,7 @@ from typing import Tuple
 
 from assignment2.converters import convert_post_numeric_fields, string_to_logging_level
 from assignment2.mongodb_database import MongoDBHandler
+from assignment2.postgresql_database import PostgreSQLHandler
 from assignment2.url_processing import find_matches, get_unique_id_from_url
 
 
@@ -99,7 +100,7 @@ class CustomHTTPRequestHandler(BaseHTTPRequestHandler):
         else:
             convert_post_numeric_fields(post_data)
             self.database_handler.insert(post_data)
-            line_number = self.database_handler.document_count()
+            line_number = self.database_handler.entry_count()
             return 201, "Created", {unique_id: line_number}
 
     def delete_request(self) -> Tuple[int, str]:
