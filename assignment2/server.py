@@ -12,7 +12,7 @@ from assignment2.url_processing import find_matches, get_unique_id_from_url
 
 class CustomHTTPRequestHandler(BaseHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
-        self.database_handler = MongoDBHandler()
+        self.database_handler = define_using_database()
         self.possible_endpoints = {
             ("GET", r"/posts/?"): self.get_all_posts_request,
             ("GET", r"/posts/.{32}/?"): self.get_single_post_request,
@@ -118,6 +118,19 @@ class CustomHTTPRequestHandler(BaseHTTPRequestHandler):
             convert_post_numeric_fields(post_data)
             self.database_handler.update(post_data)
             return 200, "OK"
+
+
+def define_using_database():
+    valid_databases = {"MongoDB": MongoDBHandler, "PostgreSQL": PostgreSQLHandler}
+    try:
+        with open("selected_database.json", "r") as file:
+            choice = json.loads(file.read())
+            database = valid_databases[choice["database"]]()
+    except (FileNotFoundError, KeyError):
+        database = PostgreSQLHandler()
+
+    logging.debug(f"Using {database}")
+    return database
 
 
 def parse_command_line_arguments() -> tuple:
