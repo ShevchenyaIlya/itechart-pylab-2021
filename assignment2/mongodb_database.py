@@ -18,12 +18,6 @@ def split_post(post):
     return dict(post_data), dict(user_data)
 
 
-def join_post(post_data, user_data):
-    post_data.update(user_data)
-    post_data.pop("owner_id")
-    post_data.pop("_id")
-
-
 class MongoDBHandler:
     def __init__(self):
         self.client = MongoClient(port=27017)
@@ -51,16 +45,18 @@ class MongoDBHandler:
         )
 
     def delete(self, unique_id):
-        if not self.post_exist(unique_id):
-            return False
-        else:
+        result = False
+
+        if self.post_exist(unique_id):
             self.delete_post(unique_id)
-            return True
+            result = True
+
+        return result
 
     def select_all_posts(self):
         all_posts = []
         for post in self.db.posts.find({}):
-            join_post(post, self.select_user_by_id(post["owner_id"]))
+            self._join_user_and_post_info(post)
             convert_date_to_string(post)
             all_posts.append(post)
 
@@ -70,10 +66,16 @@ class MongoDBHandler:
         post = self.select_post(unique_id)
 
         if post:
-            join_post(post, self.select_user_by_id(post["owner_id"]))
+            self._join_user_and_post_info(post)
             convert_date_to_string(post)
 
         return post
+
+    def _join_user_and_post_info(self, post_data):
+        user_data = self.select_user_by_id(post_data["owner_id"])
+        post_data.update(user_data)
+        post_data.pop("owner_id")
+        post_data.pop("_id")
 
     def update_post(self, post_data):
         self.db.posts.update_one(
@@ -98,7 +100,7 @@ class MongoDBHandler:
     def select_post(self, unique_id):
         return self.db.posts.find_one({"unique_id": unique_id})
 
-    def document_count(self):
+    def entry_count(self):
         return self.db.posts.estimated_document_count()
 
     def user_exist(self, username):
