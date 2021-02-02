@@ -26,8 +26,16 @@ chmod +x setup.sh
 ./setup.sh
 ```
 
+- _setup.sh_ script give you choice between two databases: PostgreSQL and MongoDB
+
+### PostgreSQL
+    database name: reddit_db
+    username: postgres
+    password: postgres
+
+ 
 ### MongoDB
-##### Latest version of MongoDB installed after running setup.sh
+    port: 27017
 ##### After installation use: 
 - start MongoDB - 'sudo systemctl start mongod'
 - stop MongoDB - 'sudo systemctl stop mongod'
