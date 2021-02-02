@@ -21,5 +21,24 @@ if [ "$?" -ne "0" ]; then
     exit 1
 fi
 
-chmod +x scripts/setup_mongodb
-./scripts/setup_mongodb
+environment_variable=assignment2/selected_database.json
+touch $environment_variable
+
+echo "Choose database for project"
+echo "1. PostgreSQL"
+echo "2. MongoDB"
+read choice
+
+if [[ choice -eq 1 ]]
+then
+  echo '{"database": "PostgreSQL"}' > $environment_variable
+  chmod +x scripts/config_postgersql
+  ./scripts/config_postgersql
+elif [[ choice -eq 2 ]]
+then
+  echo '{"database": "MongoDB"}' > $environment_variable
+  hmod +x scripts/setup_mongodb
+  ./scripts/setup_mongodb
+else
+  echo "Invalid choice. Try again."
+fi
