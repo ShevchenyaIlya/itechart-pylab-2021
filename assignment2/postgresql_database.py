@@ -37,7 +37,7 @@ class PostgreSQLHandler:
         self.update_user(post)
 
     def delete(self, unique_id):
-        if self.is_exist(unique_id):
+        if self.post_exist(unique_id):
             self.delete_post(unique_id)
             self.delete_user(unique_id)
             return True
@@ -45,7 +45,7 @@ class PostgreSQLHandler:
         return False
 
     def insert(self, post):
-        if not self.user_exists(post["username"]):
+        if not self.user_exist(post["username"]):
             self.cursor.execute(
                 self.get_query("insert_user"),
                 (
