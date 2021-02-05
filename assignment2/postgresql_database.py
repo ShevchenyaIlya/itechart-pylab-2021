@@ -37,15 +37,15 @@ class PostgreSQLHandler:
         self.update_user(post)
 
     def delete(self, unique_id):
-        if self.is_exist(unique_id):
+        if self.post_exist(unique_id):
             self.delete_post(unique_id)
             self.delete_user(unique_id)
             return True
 
         return False
 
-    def insert_parsed_post(self, post):
-        if not self.user_exists(post["username"]):
+    def insert(self, post):
+        if not self.user_exist(post["username"]):
             self.cursor.execute(
                 self.get_query("insert_user"),
                 (
@@ -111,13 +111,13 @@ class PostgreSQLHandler:
         )
         self.connection.commit()
 
-    def get_all_posts(self):
+    def select_all_posts(self):
         self.cursor.execute(self.get_query("select_all_posts"))
         rows = self.cursor.fetchall()
 
         return [convert_selected_data(row) for row in rows]
 
-    def get_single_post(self, unique_id):
+    def select_single_post(self, unique_id):
         self.cursor.execute(
             self.get_query("select_one_post"),
             (unique_id,),
@@ -127,15 +127,15 @@ class PostgreSQLHandler:
         if row:
             return convert_selected_data(row[0])
 
-    def row_count(self):
+    def entry_count(self):
         self.cursor.execute(self.get_query("row_count"))
         return self.cursor.fetchall()[0][0]
 
-    def is_exist(self, unique_id):
+    def post_exist(self, unique_id):
         self.cursor.execute(self.get_query("post_exists"), (unique_id,))
         return self.cursor.fetchall()[0][0]
 
-    def user_exists(self, username):
+    def user_exist(self, username):
         self.cursor.execute(self.get_query("user_exists"), (username,))
         return self.cursor.fetchall()[0][0]
 
