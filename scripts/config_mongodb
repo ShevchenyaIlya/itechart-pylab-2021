@@ -1,0 +1,13 @@
+#!/bin/bash
+
+
+if [[ $(which mongod) == "" ]]
+then
+  echo "Install MongoDB (you can use this tutorial: https://docs.mongodb.com/manual/tutorial/install-mongodb-enterprise-on-ubuntu/)"
+  exit 1
+else
+  echo "MongoDB is installed on your device."
+  echo "Use command: 'sudo systemctl start mongod' to start MongoDB"
+  echo "Use command: 'sudo systemctl stop mongod' to stop MongoDB"
+fi
+
