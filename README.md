@@ -21,7 +21,7 @@ http://localhost:8087/, which in turn provides a simple API for working with bas
 chmod +x setup.sh
 ```
 
-- Run _setup.sh_ to copy hooks, install and config MongoDB
+- Run _setup.sh_ to copy hooks, install and config databases
 ```bash
 ./setup.sh
 ```
