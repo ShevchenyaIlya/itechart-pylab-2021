@@ -60,5 +60,11 @@ def parse_url_parameters(url_parameters: str):
     return {
         filter_pair[0]: filter_pair[1]
         for filter_pair in filters
-        if len(filter_pair) == 2
+        if len(filter_pair) == 2 and validate_url_parameters(filter_pair[0])
     }
+
+
+def validate_url_parameters(filter_name: str):
+    possible_filters = ["page", "filter_field", "order"]
+
+    return filter_name in possible_filters
