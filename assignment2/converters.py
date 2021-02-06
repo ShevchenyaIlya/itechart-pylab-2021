@@ -50,3 +50,15 @@ def convert_post_field(karma: str) -> int:
         number = int(karma)
 
     return number
+
+
+def parse_url_parameters(url_parameters: str):
+    filters = list(
+        map(lambda filter_pair: filter_pair.split("="), url_parameters.split("&"))
+    )
+
+    return {
+        filter_pair[0]: filter_pair[1]
+        for filter_pair in filters
+        if len(filter_pair) == 2
+    }
