@@ -7,8 +7,13 @@
   transition: background-color .3s;
 }
 
-.pagination a.active {
-  background-color: dodgerblue;
+#current_page {
+  background-color: dimgray;
+  color: white;
+}
+
+#current_page:hover {
+  background-color: slategray;
   color: white;
 }
 

@@ -5,6 +5,7 @@
     <title>Title</title>
     <link rel="stylesheet" href="src/css/base.css">
     <link rel="stylesheet" href="src/css/pagination.css">
+    <link rel="stylesheet" href="src/css/modal_window.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
 </head>
 <body>
@@ -19,6 +20,11 @@
         </div>
     </div>
     <div class="image-background">
+        <button class="button button" onclick="showModalWindow()"><i class="fa fa-bars" aria-hidden="true"></i> Filters</button>
+        <div id="modal-window" style="display: none">
+            <h4>Available Filters</h4>
+        </div>
+
         <div id="posts_list">
         </div>
     </div>
@@ -30,5 +36,6 @@
     <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
     <script type="text/babel" src="src/js/get_posts.js"></script>
     <script type="text/babel" src="src/js/posts_list.js"></script>
+    <script type="text/babel" src="src/js/modal_window.js"></script>
 </body>
 </html>
