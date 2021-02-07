@@ -89,7 +89,7 @@ class CustomHTTPRequestHandler(BaseHTTPRequestHandler):
 
     def get_all_posts_request(self) -> Tuple[int, str, list]:
         db_content = self.database_handler.select_all_posts()
-        return 200, "OK", db_content
+        return (200, "OK", db_content) if db_content else (204, "No Content")
 
     def get_posts_with_filters(self) -> Tuple[int, str, list]:
         if not (filters := parse_url_parameters(self.path.replace("/posts/?", ""))):
@@ -97,7 +97,7 @@ class CustomHTTPRequestHandler(BaseHTTPRequestHandler):
         else:
             validate_url_parameters_values(filters)
             db_content = self.database_handler.select_posts_with_filters(**filters)
-            return 200, "OK", db_content
+            return (200, "OK", db_content) if db_content else (204, "No Content")
 
     def get_single_post_request(self):
         unique_id = get_unique_id_from_url(self.path)
