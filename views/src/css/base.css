@@ -1,0 +1,69 @@
+body {
+    margin: 0;
+    min-height: 100%;
+}
+
+.header {
+    padding: 40px;
+    text-align: center;
+    background-image: linear-gradient(to bottom right, red, dodgerblue);
+    color: white;
+    font-size: 30px;
+}
+
+.footer {
+    padding: 20px;
+    text-align: center;
+    background-image: linear-gradient(to bottom right, red, dodgerblue);
+}
+
+.navbar {
+    width: 100%;
+    background-color: dimgray;
+    overflow: auto;
+}
+
+.navbar div {
+    margin-left: 20px;
+    margin-right: 20px;
+}
+
+.navbar div a {
+    float: left;
+    text-align: center;
+    padding: 12px;
+    color: white;
+    text-decoration: none;
+    font-size: 17px;
+}
+
+.navbar div a:hover {
+    background-color:rgba(0, 0, 0, 0.5);
+}
+
+.active {
+    background-color: darkslategray;
+}
+
+.navbar div a.right, .navbar div button.right {
+    float: right;
+}
+
+.image-background {
+    background-image: url("../images/background.jpeg");
+    min-height: 600px;
+    padding-top: 20px;
+    padding-bottom: 50px;
+}
+
+#posts_list {
+    margin: 0;
+    padding-left: 20px;
+}
+
+@media screen and (max-width: 500px) {
+    .navbar a {
+        float: none;
+        display: block;
+    }
+}
