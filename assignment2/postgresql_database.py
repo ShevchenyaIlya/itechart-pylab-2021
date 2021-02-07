@@ -1,6 +1,7 @@
 import json
 
 import psycopg2
+from psycopg2.extensions import AsIs
 
 
 def load_database_connection_settings():
@@ -113,6 +114,17 @@ class PostgreSQLHandler:
 
     def select_all_posts(self):
         self.cursor.execute(self.get_query("select_all_posts"))
+        rows = self.cursor.fetchall()
+
+        return [convert_selected_data(row) for row in rows]
+
+    def select_posts_with_filters(
+        self, filter_field="post_date", order="ASC", page=0, posts_count=5
+    ):
+        self.cursor.execute(
+            self.get_query("select_all_posts_with_filters"),
+            (AsIs(filter_field), AsIs(order), posts_count, int(page) * posts_count),
+        )
         rows = self.cursor.fetchall()
 
         return [convert_selected_data(row) for row in rows]

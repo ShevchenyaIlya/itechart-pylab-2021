@@ -1,4 +1,4 @@
-from pymongo import MongoClient
+from pymongo import ASCENDING, DESCENDING, MongoClient
 
 from assignment2.converters import convert_date_to_string, convert_string_to_date
 
@@ -56,6 +56,23 @@ class MongoDBHandler:
     def select_all_posts(self):
         all_posts = []
         for post in self.db.posts.find({}):
+            self._join_user_and_post_info(post)
+            convert_date_to_string(post)
+            all_posts.append(post)
+
+        return all_posts
+
+    def select_posts_with_filters(
+        self, filter_field="post_date", order="ASC", page=0, posts_count=5
+    ):
+        all_posts = []
+
+        for post in (
+            self.db.posts.find({})
+            .sort(filter_field, ASCENDING if order == "ASC" else DESCENDING)
+            .skip(int(page) * posts_count)
+            .limit(posts_count)
+        ):
             self._join_user_and_post_info(post)
             convert_date_to_string(post)
             all_posts.append(post)
