@@ -4,7 +4,12 @@ import logging
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from typing import Tuple
 
-from assignment2.converters import convert_post_numeric_fields, string_to_logging_level
+from assignment2.converters import (
+    convert_post_numeric_fields,
+    parse_url_parameters,
+    string_to_logging_level,
+    validate_url_parameters_values,
+)
 from assignment2.mongodb_database import MongoDBHandler
 from assignment2.postgresql_database import PostgreSQLHandler
 from assignment2.url_processing import find_matches, get_unique_id_from_url
@@ -15,6 +20,7 @@ class CustomHTTPRequestHandler(BaseHTTPRequestHandler):
         self.database_handler = define_using_database()
         self.possible_endpoints = {
             ("GET", r"/posts/?"): self.get_all_posts_request,
+            ("GET", r"/posts/\?.*"): self.get_posts_with_filters,
             ("GET", r"/posts/.{32}/?"): self.get_single_post_request,
             ("POST", r"/posts/?"): self.post_request,
             ("DELETE", r"/posts/.{32}/?"): self.delete_request,
@@ -83,6 +89,14 @@ class CustomHTTPRequestHandler(BaseHTTPRequestHandler):
     def get_all_posts_request(self) -> Tuple[int, str, list]:
         db_content = self.database_handler.select_all_posts()
         return 200, "OK", db_content
+
+    def get_posts_with_filters(self) -> Tuple[int, str, list]:
+        if not (filters := parse_url_parameters(self.path.replace("/posts/?", ""))):
+            return self.get_all_posts_request()
+        else:
+            validate_url_parameters_values(filters)
+            db_content = self.database_handler.select_posts_with_filters(**filters)
+            return 200, "OK", db_content
 
     def get_single_post_request(self):
         unique_id = get_unique_id_from_url(self.path)
