@@ -1,5 +1,5 @@
 function ListItemHeader(props) {
-    return <h2>{props.post_url}</h2>;
+    return <h3>{props.post_header}</h3>;
 }
 
 
@@ -8,9 +8,9 @@ function ListItemBody(props) {
 
     return (
         <ul>
-        {
-            post.map(post_field => <li><b>{post_field[0] + ": "}</b>{post_field[1]}</li>)
-        }
+            {
+                post.map(post_field => <li key={post_field[0]}><b>{post_field[0] + ": "}</b>{post_field[1]}</li>)
+            }
         </ul>
     );
 }
@@ -22,14 +22,14 @@ function ListItem(props) {
     return (
     <div>
         <div id="list-item-header">
-        {
-            <ListItemHeader key={post.unique_id} post_url={post.post_url}/>
-        }
+            {
+                <ListItemHeader key={post.unique_id} post_header={post.post_category}/>
+            }
         </div>
         <div id="list-item-body">
-        {
-            <ListItemBody key={post.unique_id} post={post}/>
-        }
+            {
+                <ListItemBody key={post.unique_id} post={post}/>
+            }
         </div>
     </div>
     );
@@ -43,22 +43,20 @@ function ActionLink(props) {
     function handleClick() {
         const page = document.getElementById("current_page");
         let page_number = parseInt(page.innerHTML);
-        let new_page_number = operation(page_number);
+        configurations.page = operation(page_number);
 
-        if (new_page_number !== -1) {
-            fetchPosts("filter_field=votes_number&page=" + new_page_number + "&order=ASC")
+        if (configurations.page !== -1) {
+            fetchPosts(createFiltersLine(configurations))
             .then(data => {
                 if (data.length === 0) {
-                    new_page_number -= 1;
+                    configurations.page -= 1;
                 }
-
                 return data;
             }).then(data => {
-                if (new_page_number !== page_number) {
+                if (configurations.page !== page_number) {
                     renderList(data, postsContainer);
                 }
-
-                page.innerHTML = new_page_number;
+                page.innerHTML = configurations.page;
             });
         }
     }
@@ -72,22 +70,22 @@ function ActionLink(props) {
 
 
 function PostsList(props) {
-  const posts = props.posts;
+    const posts = props.posts;
 
-  return (
+    return (
     <div>
-      {
-        posts.map((post) => <ListItem key={post.unique_id} post={post}/>)
-      }
-      {
-      <div className="pagination">
-        <ActionLink value={">"} operation={(number) => number + 1}/>
-        <a className="active" id="current_page" href="#">0</a>
-        <ActionLink value={"<"} operation={(number) => number - 1}/>
-      </div>
-      }
+        {
+            posts.map((post) => <ListItem key={post.unique_id} post={post}/>)
+        }
+        {
+            <div className="pagination">
+                <ActionLink value={">"} operation={(number) => number + 1}/>
+                <a className="active" id="current_page" href="#">0</a>
+                <ActionLink value={"<"} operation={(number) => number - 1}/>
+            </div>
+        }
     </div>
-  );
+    );
 }
 
 
@@ -98,6 +96,10 @@ function renderList(data, container) {
     );
 }
 
+function updatePostsList() {
+    fetchPosts(createFiltersLine(configurations)).then(data => {
+        renderList(data, postsContainer);
+    });
+}
 
-const postsContainer = document.getElementById("posts_list");
-fetchPosts("order_field=votes_number&page=0&order=ASC").then(data => renderList(data, postsContainer));
+updatePostsList();

@@ -16,3 +16,9 @@ async function fetchPosts(filters = "") {
 
     return [];
 }
+
+function homePage() {
+    configurations.page = 0;
+    document.getElementById("current_page").innerHTML = "0";
+    updatePostsList()
+}
