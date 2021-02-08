@@ -19,8 +19,8 @@
 }
 
 #modal-window {
-    width: 300px;
-    height: 500px;
+    width: 240px;
+    height: auto;
     float: right;
     text-align: center;
     padding: 15px;
@@ -30,6 +30,24 @@
     animation: fadein 2s;
     -moz-animation: fadein 2s;
 }
+
+#modal-window p {
+    color: black;
+    cursor: pointer;
+    background: rgba(0, 0, 0, 0.05);
+}
+
+#modal-window p:hover {
+    background: dimgray;
+    cursor: pointer;
+}
+
+#modal-window h4:hover {
+    background: gray;
+    color: white;
+    cursor: pointer;
+}
+
 
 @keyframes fadein {
     from {
