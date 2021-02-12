@@ -6,6 +6,7 @@
     <link rel="stylesheet" href="src/css/base.css">
     <link rel="stylesheet" href="src/css/pagination.css">
     <link rel="stylesheet" href="src/css/modal_window.css">
+    <link rel="stylesheet" href="src/css/dropdown.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
 </head>
 <body>
@@ -21,10 +22,12 @@
     </div>
     <div class="image-background">
         <div>
-            <button class="button button" onclick="showModalWindow()"><i class="fa fa-bars" aria-hidden="true"></i> Filters</button>
+            <button class="button" onclick="showModalWindow()"><i class="fa fa-bars" aria-hidden="true"></i> Filters</button>
             <div id="filters_container"></div>
-        <div id="posts_list">
-        </div>
+            <div class="dropdown" id="dropdown"></div>
+            <div id="posts_list"></div>
+
+            </div>
         </div>
     </div>
     <div class="footer">
@@ -36,6 +39,7 @@
     <script type="text/babel" src="src/js/application_configurations.js"></script>
     <script type="text/babel" src="src/js/get_posts.js"></script>
     <script type="text/babel" src="src/js/posts_list.js"></script>
+    <script type="text/babel" src="src/js/dropdown.js"></script>
     <script type="text/babel" src="src/js/modal_window.js"></script>
 </body>
 </html>
