@@ -59,26 +59,20 @@ class MongoDBHandler:
 
         return result
 
-    def select_all_posts(self):
-        all_posts = []
-        for post in self.db.posts.find({}):
-            self._join_user_and_post_info(post)
-            convert_date_to_string(post)
-            all_posts.append(post)
+    def select_all_posts(self, filters, *, posts_count=0):
+        if not filters and posts_count == 0:
+            all_posts = self.db.posts.find({})
+        else:
+            condition_filters, ordering_filters = get_filter_groups(filters)
+            all_posts = self.db.posts.find(condition_filters)
 
-        return all_posts
+            if ordering_filters.get("sorting_field", False):
+                all_posts.sort(
+                    filters["sorting_field"],
+                    ASCENDING if filters["order"] == "ASC" else DESCENDING,
+                )
 
-    def select_posts_with_filters(self, filters, posts_count=5):
-        condition_filters, ordering_filters = get_filter_groups(filters)
-        all_posts = self.db.posts.find(condition_filters)
-
-        if ordering_filters.get("sorting_field", False):
-            all_posts.sort(
-                filters["sorting_field"],
-                ASCENDING if filters["order"] == "ASC" else DESCENDING,
-            )
-
-        all_posts.skip(int(filters.get("page", 0)) * posts_count).limit(posts_count)
+            all_posts.skip(int(filters.get("page", 0)) * posts_count).limit(posts_count)
 
         joined_posts = []
         for post in all_posts:

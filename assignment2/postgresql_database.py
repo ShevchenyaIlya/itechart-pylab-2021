@@ -114,28 +114,24 @@ class PostgreSQLHandler:
         )
         self.connection.commit()
 
-    def select_all_posts(self):
-        self.cursor.execute(self.get_query("select_all_posts"))
-        rows = self.cursor.fetchall()
+    def select_all_posts(self, filters, *, posts_count=0):
+        if not filters and posts_count == 0:
+            self.cursor.execute(self.get_query("select_all_posts"))
+        else:
+            condition_string = form_condition_string(filters)
+            order_string = form_order_string(filters)
 
-        return [convert_selected_data(row) for row in rows]
-
-    def select_posts_with_filters(self, filters, posts_count=5):
-        condition_string = form_condition_string(filters)
-        order_string = form_order_string(filters)
-
-        self.cursor.execute(
-            self.get_query("select_all_posts_with_filters"),
-            (
-                AsIs(condition_string),
-                AsIs(order_string),
-                posts_count,
-                int(filters.get("page", 0)) * posts_count,
-            ),
-        )
+            self.cursor.execute(
+                self.get_query("select_all_posts_with_filters"),
+                (
+                    AsIs(condition_string),
+                    AsIs(order_string),
+                    posts_count,
+                    int(filters.get("page", 0)) * posts_count,
+                ),
+            )
 
         rows = self.cursor.fetchall()
-
         return [convert_selected_data(row) for row in rows]
 
     def select_single_post(self, unique_id):
