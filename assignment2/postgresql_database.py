@@ -3,6 +3,8 @@ import json
 import psycopg2
 from psycopg2.extensions import AsIs
 
+from assignment2.converters import form_condition_string, form_order_string
+
 
 def load_database_connection_settings():
     with open("db_connection_setting.json") as json_file:
@@ -118,13 +120,20 @@ class PostgreSQLHandler:
 
         return [convert_selected_data(row) for row in rows]
 
-    def select_posts_with_filters(
-        self, filter_field="post_date", order="ASC", page=0, posts_count=5
-    ):
+    def select_posts_with_filters(self, filters, posts_count=5):
+        condition_string = form_condition_string(filters)
+        order_string = form_order_string(filters)
+
         self.cursor.execute(
             self.get_query("select_all_posts_with_filters"),
-            (AsIs(filter_field), AsIs(order), posts_count, int(page) * posts_count),
+            (
+                AsIs(condition_string),
+                AsIs(order_string),
+                posts_count,
+                int(filters.get("page", 0)) * posts_count,
+            ),
         )
+
         rows = self.cursor.fetchall()
 
         return [convert_selected_data(row) for row in rows]
@@ -142,6 +151,10 @@ class PostgreSQLHandler:
     def entry_count(self):
         self.cursor.execute(self.get_query("row_count"))
         return self.cursor.fetchall()[0][0]
+
+    def posts_categories(self):
+        self.cursor.execute(self.get_query("select_all_posts_categories"))
+        return self.cursor.fetchall()
 
     def post_exist(self, unique_id):
         self.cursor.execute(self.get_query("post_exists"), (unique_id,))

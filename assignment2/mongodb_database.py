@@ -1,6 +1,12 @@
+from datetime import datetime
+
 from pymongo import ASCENDING, DESCENDING, MongoClient
 
-from assignment2.converters import convert_date_to_string, convert_string_to_date
+from assignment2.converters import (
+    convert_date_to_string,
+    convert_string_to_date,
+    get_selected_filters,
+)
 
 
 def split_post(post):
@@ -62,22 +68,25 @@ class MongoDBHandler:
 
         return all_posts
 
-    def select_posts_with_filters(
-        self, filter_field="post_date", order="ASC", page=0, posts_count=5
-    ):
-        all_posts = []
+    def select_posts_with_filters(self, filters, posts_count=5):
+        condition_filters, ordering_filters = get_filter_groups(filters)
+        all_posts = self.db.posts.find(condition_filters)
 
-        for post in (
-            self.db.posts.find({})
-            .sort(filter_field, ASCENDING if order == "ASC" else DESCENDING)
-            .skip(int(page) * posts_count)
-            .limit(posts_count)
-        ):
+        if ordering_filters.get("sorting_field", False):
+            all_posts.sort(
+                filters["sorting_field"],
+                ASCENDING if filters["order"] == "ASC" else DESCENDING,
+            )
+
+        all_posts.skip(int(filters.get("page", 0)) * posts_count).limit(posts_count)
+
+        joined_posts = []
+        for post in all_posts:
             self._join_user_and_post_info(post)
             convert_date_to_string(post)
-            all_posts.append(post)
+            joined_posts.append(post)
 
-        return all_posts
+        return joined_posts
 
     def select_single_post(self, unique_id):
         post = self.select_post(unique_id)
@@ -125,3 +134,25 @@ class MongoDBHandler:
 
     def post_exist(self, unique_id):
         return self.db.posts.count_documents({"unique_id": unique_id}, limit=1) != 0
+
+    def posts_categories(self):
+        return self.db.posts.distinct("post_category")
+
+
+def get_filter_groups(filters: dict):
+    condition_filters = get_selected_filters(
+        filters, ["post_category", "votes_number", "post_date"]
+    )
+    ordering_filters = get_selected_filters(filters, ["sorting_field", "order"])
+
+    if date := condition_filters.get("post_date", False):
+        condition_filters["post_date"] = datetime.strptime(date, "%Y-%m-%d")
+
+    if borders := condition_filters.get("votes_number", False):
+        borders = borders.split("-")
+        condition_filters["votes_number"] = {
+            "$gte": int(borders[0]),
+            "$lte": int(borders[1]),
+        }
+
+    return condition_filters, ordering_filters
