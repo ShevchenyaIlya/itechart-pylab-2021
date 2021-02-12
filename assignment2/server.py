@@ -20,7 +20,7 @@ class CustomHTTPRequestHandler(BaseHTTPRequestHandler):
         self.database_handler = define_using_database()
         self.possible_endpoints = {
             ("GET", r"/posts/?"): self.get_all_posts_request,
-            ("GET", r"/posts/\?.*"): self.get_posts_with_filters,
+            ("GET", r"/posts/\?.*"): self.get_all_posts_request,
             ("GET", r"/posts/.{32}/?"): self.get_single_post_request,
             ("POST", r"/posts/?"): self.post_request,
             ("DELETE", r"/posts/.{32}/?"): self.delete_request,
@@ -88,18 +88,15 @@ class CustomHTTPRequestHandler(BaseHTTPRequestHandler):
             self._set_response(404, "Not Found")
 
     def get_all_posts_request(self) -> Tuple[int, str, list]:
-        db_content = self.database_handler.select_all_posts()
-        return (200, "OK", db_content) if db_content else (204, "No Content", [])
-
-    def get_posts_with_filters(self) -> Tuple[int, str, list]:
         if not (filters := parse_url_parameters(self.path)):
-            return self.get_all_posts_request()
+            db_content = self.database_handler.select_all_posts(None)
         else:
             validate_url_parameters_values(
                 filters, self.database_handler.posts_categories()
             )
-            db_content = self.database_handler.select_posts_with_filters(filters)
-            return (200, "OK", db_content) if db_content else (204, "No Content", [])
+            db_content = self.database_handler.select_all_posts(filters, posts_count=5)
+
+        return (200, "OK", db_content) if db_content else (204, "No Content", [])
 
     def get_single_post_request(self):
         unique_id = get_unique_id_from_url(self.path)
