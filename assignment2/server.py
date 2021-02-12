@@ -95,8 +95,10 @@ class CustomHTTPRequestHandler(BaseHTTPRequestHandler):
         if not (filters := parse_url_parameters(self.path)):
             return self.get_all_posts_request()
         else:
-            validate_url_parameters_values(filters)
-            db_content = self.database_handler.select_posts_with_filters(**filters)
+            validate_url_parameters_values(
+                filters, self.database_handler.posts_categories()
+            )
+            db_content = self.database_handler.select_posts_with_filters(filters)
             return (200, "OK", db_content) if db_content else (204, "No Content", [])
 
     def get_single_post_request(self):
