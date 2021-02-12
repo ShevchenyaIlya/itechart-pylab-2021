@@ -8,11 +8,11 @@ from assignment2.converters import (
     convert_post_numeric_fields,
     parse_url_parameters,
     string_to_logging_level,
-    validate_url_parameters_values,
 )
 from assignment2.mongodb_database import MongoDBHandler
 from assignment2.postgresql_database import PostgreSQLHandler
 from assignment2.url_processing import find_matches, get_unique_id_from_url
+from assignment2.validators import validate_url_parameters_values
 
 
 class CustomHTTPRequestHandler(BaseHTTPRequestHandler):
@@ -89,15 +89,15 @@ class CustomHTTPRequestHandler(BaseHTTPRequestHandler):
 
     def get_all_posts_request(self) -> Tuple[int, str, list]:
         db_content = self.database_handler.select_all_posts()
-        return (200, "OK", db_content) if db_content else (204, "No Content")
+        return (200, "OK", db_content) if db_content else (204, "No Content", [])
 
     def get_posts_with_filters(self) -> Tuple[int, str, list]:
-        if not (filters := parse_url_parameters(self.path.replace("/posts/?", ""))):
+        if not (filters := parse_url_parameters(self.path)):
             return self.get_all_posts_request()
         else:
             validate_url_parameters_values(filters)
             db_content = self.database_handler.select_posts_with_filters(**filters)
-            return (200, "OK", db_content) if db_content else (204, "No Content")
+            return (200, "OK", db_content) if db_content else (204, "No Content", [])
 
     def get_single_post_request(self):
         unique_id = get_unique_id_from_url(self.path)
