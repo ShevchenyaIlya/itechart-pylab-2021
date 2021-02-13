@@ -31,22 +31,8 @@
     -moz-animation: fadein 2s;
 }
 
-#modal-window p {
-    color: black;
-    cursor: pointer;
-    background: rgba(0, 0, 0, 0.05);
-    padding: 5px;
-}
-
-#modal-window p:hover {
-    background: dimgray;
-    cursor: pointer;
-}
-
-#modal-window h4:hover {
-    background: gray;
-    color: white;
-    cursor: pointer;
+#post_date {
+    padding: 5px 10px;
 }
 
 #filters_container {

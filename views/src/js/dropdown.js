@@ -2,7 +2,7 @@ function Dropdown(props) {
     const filters = props.filters;
 
     return (
-        <fragment>
+        <div>
             <button className="button">Order</button>
             <div className="dropdown-content">
                 <Swapper />
@@ -10,7 +10,7 @@ function Dropdown(props) {
                     filters.map((filter) => <DropdownItem key={filter} filter_name={filter}/>)
                 }
             </div>
-        </fragment>
+        </div>
     );
 }
 
