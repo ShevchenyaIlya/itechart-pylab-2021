@@ -2,7 +2,6 @@ function ListItemHeader(props) {
     return <h3>{props.post_header}</h3>;
 }
 
-
 function ListItemBody(props) {
     const post = Object.entries(props.post);
 
@@ -14,7 +13,6 @@ function ListItemBody(props) {
         </ul>
     );
 }
-
 
 function ListItem(props) {
     const post = props.post;
@@ -34,7 +32,6 @@ function ListItem(props) {
     </div>
     );
 }
-
 
 function ActionLink(props) {
     const value = props.value;
@@ -68,7 +65,6 @@ function ActionLink(props) {
     );
 }
 
-
 function PostsList(props) {
     const posts = props.posts;
 
@@ -88,7 +84,6 @@ function PostsList(props) {
     );
 }
 
-
 function renderList(data, container) {
     ReactDOM.render(
         <PostsList posts={data}/>,
@@ -96,7 +91,7 @@ function renderList(data, container) {
     );
 }
 
-function updatePostsList() {
+const updatePostsList = () => {
     fetchPosts(createFiltersLine(configurations)).then(data => {
         renderList(data, postsContainer);
     });

@@ -1,4 +1,4 @@
-function showModalWindow() {
+const showModalWindow = () => {
     const modalWindow = document.getElementById("modal-window");
     clear_filters();
 
@@ -71,8 +71,6 @@ function Filters() {
         </div>
     );
 }
-
-
 
 function SubmitFilters() {
     const handler = () => {
