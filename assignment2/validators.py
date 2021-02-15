@@ -55,22 +55,18 @@ def order_validation(value: str):
     return value in possible_orders
 
 
-def validate_url_parameters_values(parameter_pairs: dict, categories):
+def validate_url_parameters_values(parameter_pairs: dict):
     validator = {
         "page": page_number_validation,
-        "post_category": category_validation,
         "post_date": post_date_validation,
         "votes_number": votes_number_validation,
         "sorting_field": sorting_field_validation,
         "order": order_validation,
     }
 
-    for key, value in parameter_pairs.items():
-        is_valid = (
-            validator[key](value, categories)
-            if key == "post_category"
-            else validator[key](value)
-        )
+    for key, value in list(parameter_pairs.items()):
+        if key != "post_category":
+            is_valid = validator[key](value)
 
-        if not is_valid:
-            parameter_pairs.pop(key)
+            if not is_valid:
+                parameter_pairs.pop(key)
