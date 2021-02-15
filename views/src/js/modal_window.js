@@ -36,11 +36,11 @@ function VotesNumberFilter({setVotesNumberFrom, setVotesNumberTo, votes_from, vo
             <label><b>Votes number:</b><br/></label>
             <div>
                 <label htmlFor="from"><b>From:</b></label>
-                <input value={votes_from} onChange={setVotesNumberFrom} name="from" type="text" id="votes_number_from" style={{width: "45%"}}/>
+                <input value={votes_from} onChange={setVotesNumberFrom} name="from" type="text" id="votes_number_from"/>
             </div>
             <div>
                 <label htmlFor="to"><b>To:</b></label>
-                <input value={votes_to} onChange={setVotesNumberTo} name="to" type="text" id="votes_number_to" style={{width: "45%"}}/>
+                <input value={votes_to} onChange={setVotesNumberTo} name="to" type="text" id="votes_number_to"/>
             </div>
         </div>
     )
