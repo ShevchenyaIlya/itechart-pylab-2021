@@ -14,8 +14,7 @@ function ListItemBody(props) {
     );
 }
 
-function ListItem(props) {
-    const post = props.post;
+function ListItem({post}) {
 
     return (
     <div>
@@ -33,10 +32,7 @@ function ListItem(props) {
     );
 }
 
-function ActionLink(props) {
-    const value = props.value;
-    const operation = props.operation;
-
+function ActionLink({value, operation}) {
     function handleClick() {
         const page = document.getElementById("current_page");
         let page_number = parseInt(page.innerHTML);
@@ -65,9 +61,7 @@ function ActionLink(props) {
     );
 }
 
-function PostsList(props) {
-    const posts = props.posts;
-
+function PostsList({posts}) {
     return (
     <div>
         {

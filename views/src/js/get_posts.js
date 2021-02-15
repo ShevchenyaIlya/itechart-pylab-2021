@@ -3,15 +3,19 @@ async function fetchPosts(filters = "") {
     if (filters !== "") {
         url += "?" + filters;
     }
-    const response = await fetch(url, {
-        method: 'GET',
-        mode: 'cors',
-        async: true,
-    });
+    try {
+        const response_data  = await fetch(url, {
+            method: 'GET',
+            mode: 'cors',
+            async: true,
+        });
 
-    let response_data = await response;
-    if (response_data.status === 200) {
-        return response_data.json();
+        if (response_data.status === 200) {
+            return response_data.json();
+        }
+    }
+    catch (e) {
+        console.error("No connection with server!")
     }
 
     return [];

@@ -1,6 +1,4 @@
-function Dropdown(props) {
-    const filters = props.filters;
-
+function Dropdown({filters}) {
     return (
         <div>
             <button className="button">Order</button>
@@ -14,10 +12,9 @@ function Dropdown(props) {
     );
 }
 
-function DropdownItem(props) {
-    const filter_name = props.filter_name
-
-    function handler() {
+function DropdownItem({filter_name}) {
+    function handler(event) {
+        event.preventDefault();
         configurations.sorting_field = filter_name;
         updatePostsList();
     }
@@ -31,33 +28,28 @@ class Swapper extends React.Component {
     constructor(props) {
         super(props);
         this.state = {isASC: true};
+        this.orderIcon = React.createRef();
 
-        this.handleClick = this.handleClick.bind(this);
-    }
+        this.handleClick = () => {
+            this.setState(state => ({
+                isASC: !state.isASC
+            }));
 
-    handleClick()
-    {
-        this.setState(state => ({
-            isASC: !state.isASC
-        }));
-
-        let order_icon = document.getElementById("order-icon");
-        if (this.state.isASC) {
-            order_icon.className = "fa fa-angle-double-up";
-            configurations.order = "DESC";
+            if (this.state.isASC) {
+                this.orderIcon.current.className = "fa fa-angle-double-up";
+                configurations.order = "DESC";
+            } else {
+                configurations.order = "ASC";
+                this.orderIcon.current.className = "fa fa-angle-double-down";
+            }
+            updatePostsList()
         }
-        else {
-            configurations.order = "ASC";
-            order_icon.className = "fa fa-angle-double-down";
-        }
-        updatePostsList()
     }
-
     render()
     {
         return (
             <h4 onClick={this.handleClick}>
-                Sorting by <i id="order-icon" className="fa fa-angle-double-down" aria-hidden="true"></i>
+                Sorting by <i ref={this.orderIcon} id="order-icon" className="fa fa-angle-double-down" aria-hidden="true"></i>
             </h4>
         );
     }
