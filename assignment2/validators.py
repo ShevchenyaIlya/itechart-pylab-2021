@@ -65,11 +65,11 @@ def validate_url_parameters_values(parameter_pairs: dict, categories):
         "order": order_validation,
     }
 
-    for key in parameter_pairs:
+    for key, value in parameter_pairs.items():
         is_valid = (
-            validator[key](parameter_pairs[key], categories)
+            validator[key](value, categories)
             if key == "post_category"
-            else validator[key](parameter_pairs[key])
+            else validator[key](value)
         )
 
         if not is_valid:

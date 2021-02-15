@@ -6,6 +6,7 @@ from typing import Tuple
 
 from assignment2.converters import (
     convert_post_numeric_fields,
+    convert_votes_number_pair,
     parse_url_parameters,
     string_to_logging_level,
 )
@@ -87,12 +88,15 @@ class CustomHTTPRequestHandler(BaseHTTPRequestHandler):
 
     def get_all_posts_request(self) -> Tuple[int, str, list]:
         if not (filters := parse_url_parameters(self.path)):
-            db_content = self.database_handler.select_all_posts(None)
+            db_content = self.database_handler.select_all_posts()
         else:
             validate_url_parameters_values(
                 filters, self.database_handler.posts_categories()
             )
-            db_content = self.database_handler.select_all_posts(filters, posts_count=5)
+            convert_votes_number_pair(filters)
+            db_content = self.database_handler.select_all_posts(
+                **filters, posts_count=5
+            )
 
         return (200, "OK", db_content) if db_content else (204, "No Content", [])
 
