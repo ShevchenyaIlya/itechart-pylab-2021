@@ -64,38 +64,11 @@ def parse_url_parameters(url_parameters: str):
     }
 
 
-def get_selected_filters(filters: dict, allowed_keys: list):
-    return {key: value for key, value in filters.items() if key in allowed_keys}
-
-
-def form_order_string(filters):
-    filters = get_selected_filters(filters, ["sorting_field", "order"])
-    if not filters.get("sorting_field", False):
-        return ""
-
-    return " ".join(["ORDER BY", filters["sorting_field"], filters.get("order", "ASC")])
-
-
-def form_condition_string(filters: dict):
-    rules = {
-        "post_category": "post_category='%s'",
-        "post_date": "post_date::date='%s'",
-        "votes_number": "(votes_number >= %s AND votes_number <= %d)",
-    }
-    filters = get_selected_filters(
-        filters, ["post_category", "votes_number", "post_date"]
-    )
-    if not filters:
-        return ""
-
-    conditions = []
-    for key, value in filters.items():
-        if key != "votes_number":
-            conditions.append(rules[key].replace("%s", value))
-        else:
-            value = value.split("-")
-            conditions.append(
-                rules[key].replace("%s", value[0]).replace("%d", value[1])
-            )
-
-    return "WHERE " + " AND ".join(conditions)
+def convert_votes_number_pair(filters: dict):
+    if filters.get("votes_number", None) is not None:
+        votes_number_from, votes_number_to = list(
+            map(int, filters.get("votes_number").split("-"))
+        )
+        filters.pop("votes_number")
+        filters["votes_number_from"] = votes_number_from
+        filters["votes_number_to"] = votes_number_to
