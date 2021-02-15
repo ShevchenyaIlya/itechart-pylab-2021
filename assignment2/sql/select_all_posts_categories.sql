@@ -1,1 +1,0 @@
-SELECT DISTINCT post_category FROM posts;
