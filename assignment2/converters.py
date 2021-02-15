@@ -64,8 +64,8 @@ def parse_url_parameters(url_parameters: str):
     }
 
 
-def get_selected_filters(filters: dict, condition: list):
-    return {key: value for key, value in filters.items() if key in condition}
+def get_selected_filters(filters: dict, allowed_keys: list):
+    return {key: value for key, value in filters.items() if key in allowed_keys}
 
 
 def form_order_string(filters):

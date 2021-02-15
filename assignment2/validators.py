@@ -2,20 +2,20 @@ from datetime import datetime
 
 
 def validate_url_parameters(filter_name: str):
-    possible_filters = [
+    possible_filters = {
         "page",
         "post_category",
         "post_date",
         "votes_number",
         "sorting_field",
         "order",
-    ]
+    }
 
     return filter_name in possible_filters
 
 
 def sorting_field_validation(value: str):
-    return value in ["post_category", "votes_number", "post_date"]
+    return value in {"post_category", "votes_number", "post_date"}
 
 
 def page_number_validation(value: str):
@@ -65,7 +65,7 @@ def validate_url_parameters_values(parameter_pairs: dict, categories):
         "order": order_validation,
     }
 
-    for key in list(parameter_pairs):
+    for key in parameter_pairs:
         is_valid = (
             validator[key](parameter_pairs[key], categories)
             if key == "post_category"

@@ -18,7 +18,7 @@ from assignment2.validators import validate_url_parameters_values
 class CustomHTTPRequestHandler(BaseHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
         self.database_handler = define_using_database()
-        self.possible_endpoints = {
+        self.endpoints = {
             ("GET", r"/posts/?"): self.get_all_posts_request,
             ("GET", r"/posts/\?.*"): self.get_all_posts_request,
             ("GET", r"/posts/.{32}/?"): self.get_single_post_request,
@@ -29,10 +29,8 @@ class CustomHTTPRequestHandler(BaseHTTPRequestHandler):
         super().__init__(*args, **kwargs)
 
     def request_handler(self, command: str, uri: str):
-        possible_endpoint = list(
-            filter(lambda key: key[0] == command, self.possible_endpoints)
-        )
-        return self.possible_endpoints.get(find_matches(possible_endpoint, uri))
+        possible_endpoint = list(filter(lambda key: key[0] == command, self.endpoints))
+        return self.endpoints.get(find_matches(possible_endpoint, uri))
 
     def _get_request_body(self) -> dict:
         content_length = int(self.headers["Content-Length"])
