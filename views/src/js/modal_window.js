@@ -25,15 +25,18 @@ const clear_filters = () => {
     configurations.post_category = null;
 }
 
-function CategoryFilter() {
+function SelectCategory({categories}) {
     return (
         <div>
             <label htmlFor="category"><b>Category:</b></label>
-            <input name="category" id="category" type={"text"}/>
+            <select id={"category"}>
+                {
+                    categories.map((category) => <option key={category} value={category}>{category}</option>)
+                }
+            </select>
         </div>
     )
 }
-
 
 function VotesNumberFilter() {
     return (
@@ -60,12 +63,12 @@ function PostDateFilter() {
     )
 }
 
-function Filters() {
+function Filters({categories}) {
     return (
         <div id="modal-window" style={{display: 'none'}}>
             <h3>Filters</h3>
             <PostDateFilter/>
-            <CategoryFilter/>
+            <SelectCategory categories={categories}/>
             <VotesNumberFilter/>
             <SubmitFilters/>
         </div>
@@ -76,7 +79,7 @@ function SubmitFilters() {
     const handler = () => {
         const [category, post_date, votes_from, votes_to] = get_filters_blocks()
 
-        configurations.post_category = category.value;
+        configurations.post_category = category.options[category.selectedIndex].value;
         configurations.votes_number = [votes_from.value, votes_to.value].join("-");
         configurations.post_date = post_date.value;
         configurations.page = 0;
@@ -84,11 +87,21 @@ function SubmitFilters() {
     }
 
     return (
-        <button onClick={handler} style={{margin: "10px"}}>Filter</button>
+        <button onClick={handler}>Filter</button>
     )
 }
 
-ReactDOM.render(
-    <Filters filters={filters}/>,
-    document.getElementById("filters_container")
-);
+function renderFilters(categories) {
+    ReactDOM.render(
+        <Filters categories={categories}/>,
+        document.getElementById("filters_container")
+    );
+}
+
+fetchCategories().then(data => {
+    let categories = [];
+    for (let i = 0; i < data.length; i++) {
+        categories.push(data[i][0]);
+    }
+    renderFilters(categories)
+});
