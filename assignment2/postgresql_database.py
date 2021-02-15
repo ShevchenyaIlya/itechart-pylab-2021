@@ -58,6 +58,11 @@ class PostgreSQLHandler:
                 ),
             )
 
+        if not self.category_exist(post["post_category"]):
+            self.cursor.execute(
+                self.get_query("insert_category"), (post["post_category"],)
+            )
+
         self.cursor.execute(
             self.get_query("insert_post"),
             (
@@ -159,7 +164,7 @@ class PostgreSQLHandler:
         return self.cursor.fetchall()[0][0]
 
     def posts_categories(self):
-        self.cursor.execute(self.get_query("select_all_posts_categories"))
+        self.cursor.execute(self.get_query("select_all_categories"))
         return self.cursor.fetchall()
 
     def post_exist(self, unique_id):
@@ -168,6 +173,10 @@ class PostgreSQLHandler:
 
     def user_exist(self, username):
         self.cursor.execute(self.get_query("user_exists"), (username,))
+        return self.cursor.fetchall()[0][0]
+
+    def category_exist(self, category):
+        self.cursor.execute(self.get_query("category_exists"), (category,))
         return self.cursor.fetchall()[0][0]
 
     def close_connection(self):
@@ -186,5 +195,5 @@ def convert_selected_data(row):
         "post_date": str(row[3]),
         "comments_number": row[4],
         "votes_number": row[5],
-        "post_category": row[6],
+        "post_category": row[15],
     }

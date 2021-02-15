@@ -21,6 +21,7 @@ class CustomHTTPRequestHandler(BaseHTTPRequestHandler):
         self.database_handler = define_using_database()
         self.endpoints = {
             ("GET", r"/posts/?"): self.get_all_posts_request,
+            ("GET", r"/categories/?"): self.get_all_categories_request,
             ("GET", r"/posts/\?.*"): self.get_all_posts_request,
             ("GET", r"/posts/.{32}/?"): self.get_single_post_request,
             ("POST", r"/posts/?"): self.post_request,
@@ -90,14 +91,17 @@ class CustomHTTPRequestHandler(BaseHTTPRequestHandler):
         if not (filters := parse_url_parameters(self.path)):
             db_content = self.database_handler.select_all_posts()
         else:
-            validate_url_parameters_values(
-                filters, self.database_handler.posts_categories()
-            )
+            validate_url_parameters_values(filters)
             convert_votes_number_pair(filters)
+
             db_content = self.database_handler.select_all_posts(
                 **filters, posts_count=5
             )
 
+        return (200, "OK", db_content) if db_content else (204, "No Content", [])
+
+    def get_all_categories_request(self):
+        db_content = self.database_handler.posts_categories()
         return (200, "OK", db_content) if db_content else (204, "No Content", [])
 
     def get_single_post_request(self):
