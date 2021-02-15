@@ -2,11 +2,7 @@ from datetime import datetime
 
 from pymongo import ASCENDING, DESCENDING, MongoClient
 
-from assignment2.converters import (
-    convert_date_to_string,
-    convert_string_to_date,
-    get_selected_filters,
-)
+from assignment2.converters import convert_date_to_string, convert_string_to_date
 
 
 def split_post(post):
@@ -59,20 +55,33 @@ class MongoDBHandler:
 
         return result
 
-    def select_all_posts(self, filters, *, posts_count=0):
-        if not filters and posts_count == 0:
+    def select_all_posts(
+        self,
+        *,
+        post_category=None,
+        post_date=None,
+        votes_number_from=None,
+        votes_number_to=None,
+        sorting_field="post_date",
+        order="ASC",
+        page=0,
+        posts_count=0
+    ):
+        if posts_count == 0:
             all_posts = self.db.posts.find({})
         else:
-            condition_filters, ordering_filters = get_filter_groups(filters)
+            condition_filters = get_filter_groups(
+                post_category, post_date, votes_number_from, votes_number_to
+            )
             all_posts = self.db.posts.find(condition_filters)
 
-            if ordering_filters.get("sorting_field", False):
+            if sorting_field is not None:
                 all_posts.sort(
-                    filters["sorting_field"],
-                    ASCENDING if filters["order"] == "ASC" else DESCENDING,
+                    sorting_field,
+                    ASCENDING if order == "ASC" else DESCENDING,
                 )
 
-            all_posts.skip(int(filters.get("page", 0)) * posts_count).limit(posts_count)
+            all_posts.skip(int(page) * posts_count).limit(posts_count)
 
         joined_posts = []
         for post in all_posts:
@@ -133,20 +142,24 @@ class MongoDBHandler:
         return self.db.posts.distinct("post_category")
 
 
-def get_filter_groups(filters: dict):
-    condition_filters = get_selected_filters(
-        filters, ["post_category", "votes_number", "post_date"]
-    )
-    ordering_filters = get_selected_filters(filters, ["sorting_field", "order"])
+def get_filter_groups(
+    post_category=None,
+    post_date=None,
+    votes_number_from=None,
+    votes_number_to=None,
+):
+    condition_filters = {}
 
-    if date := condition_filters.get("post_date", False):
-        condition_filters["post_date"] = datetime.strptime(date, "%Y-%m-%d")
+    if post_category is not None:
+        condition_filters["post_category"] = post_category
 
-    if borders := condition_filters.get("votes_number", False):
-        borders = borders.split("-")
+    if post_date is not None:
+        condition_filters["post_date"] = datetime.strptime(post_date, "%Y-%m-%d")
+
+    if votes_number_from is not None and votes_number_to is not None:
         condition_filters["votes_number"] = {
-            "$gte": int(borders[0]),
-            "$lte": int(borders[1]),
+            "$gte": votes_number_from,
+            "$lte": votes_number_to,
         }
 
-    return condition_filters, ordering_filters
+    return condition_filters

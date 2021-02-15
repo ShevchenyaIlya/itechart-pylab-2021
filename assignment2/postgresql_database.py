@@ -3,8 +3,6 @@ import json
 import psycopg2
 from psycopg2.extensions import AsIs
 
-from assignment2.converters import form_condition_string, form_order_string
-
 
 def load_database_connection_settings():
     with open("db_connection_setting.json") as json_file:
@@ -114,20 +112,32 @@ class PostgreSQLHandler:
         )
         self.connection.commit()
 
-    def select_all_posts(self, filters, *, posts_count=0):
-        if not filters and posts_count == 0:
+    def select_all_posts(
+        self,
+        *,
+        post_category=None,
+        post_date=None,
+        votes_number_from=None,
+        votes_number_to=None,
+        sorting_field="post_date",
+        order="ASC",
+        page=0,
+        posts_count=0
+    ):
+        if posts_count == 0:
             self.cursor.execute(self.get_query("select_all_posts"))
         else:
-            condition_string = form_condition_string(filters)
-            order_string = form_order_string(filters)
-
             self.cursor.execute(
                 self.get_query("select_all_posts_with_filters"),
                 (
-                    AsIs(condition_string),
-                    AsIs(order_string),
+                    post_category,
+                    post_date,
+                    votes_number_from,
+                    votes_number_to,
+                    AsIs(sorting_field),
+                    AsIs(order),
                     posts_count,
-                    int(filters.get("page", 0)) * posts_count,
+                    int(page) * posts_count,
                 ),
             )
 
