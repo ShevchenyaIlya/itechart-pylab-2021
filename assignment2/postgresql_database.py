@@ -117,32 +117,21 @@ class PostgreSQLHandler:
         )
         self.connection.commit()
 
-    def select_all_posts(
-        self,
-        *,
-        post_category=None,
-        post_date=None,
-        votes_number_from=None,
-        votes_number_to=None,
-        sorting_field="post_date",
-        order="ASC",
-        page=0,
-        posts_count=0
-    ):
-        if posts_count == 0:
+    def select_all_posts(self, page_size=0, **kwargs):
+        if page_size == 0:
             self.cursor.execute(self.get_query("select_all_posts"))
         else:
             self.cursor.execute(
                 self.get_query("select_all_posts_with_filters"),
                 (
-                    post_category,
-                    post_date,
-                    votes_number_from,
-                    votes_number_to,
-                    AsIs(sorting_field),
-                    AsIs(order),
-                    posts_count,
-                    int(page) * posts_count,
+                    kwargs.get("post_category", None),
+                    kwargs.get("post_date", None),
+                    kwargs.get("votes_number_from", None),
+                    kwargs.get("votes_number_to", None),
+                    AsIs(kwargs.get("sorting_field", "post_date")),
+                    AsIs(kwargs.get("order", "ASC")),
+                    page_size,
+                    int(kwargs.get("page", 0)) * page_size,
                 ),
             )
 

@@ -94,9 +94,7 @@ class CustomHTTPRequestHandler(BaseHTTPRequestHandler):
             validate_url_parameters_values(filters)
             convert_votes_number_pair(filters)
 
-            db_content = self.database_handler.select_all_posts(
-                **filters, posts_count=5
-            )
+            db_content = self.database_handler.select_all_posts(**filters, page_size=5)
 
         return (200, "OK", db_content) if db_content else (204, "No Content", [])
 

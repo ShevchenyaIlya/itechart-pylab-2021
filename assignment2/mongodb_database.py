@@ -55,33 +55,25 @@ class MongoDBHandler:
 
         return result
 
-    def select_all_posts(
-        self,
-        *,
-        post_category=None,
-        post_date=None,
-        votes_number_from=None,
-        votes_number_to=None,
-        sorting_field="post_date",
-        order="ASC",
-        page=0,
-        posts_count=0
-    ):
-        if posts_count == 0:
+    def select_all_posts(self, page_size=0, **kwargs):
+        if page_size == 0:
             all_posts = self.db.posts.find({})
         else:
             condition_filters = get_filter_groups(
-                post_category, post_date, votes_number_from, votes_number_to
+                kwargs.get("post_category", None),
+                kwargs.get("post_date", None),
+                kwargs.get("votes_number_from", None),
+                kwargs.get("votes_number_to", None),
             )
             all_posts = self.db.posts.find(condition_filters)
 
-            if sorting_field is not None:
+            if kwargs.get("sorting_field", None) is not None:
                 all_posts.sort(
-                    sorting_field,
-                    ASCENDING if order == "ASC" else DESCENDING,
+                    kwargs.get("sorting_field", "post_date"),
+                    ASCENDING if kwargs.get("order", "ASC") == "ASC" else DESCENDING,
                 )
 
-            all_posts.skip(int(page) * posts_count).limit(posts_count)
+            all_posts.skip(int(kwargs.get("page", 0)) * page_size).limit(page_size)
 
         joined_posts = []
         for post in all_posts:
