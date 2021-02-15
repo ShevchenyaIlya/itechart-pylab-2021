@@ -1,1 +1,1 @@
-SELECT exists(SELECT category_id FROM categories WHERE category_name=%s);
+SELECT exists(SELECT category_id FROM categories WHERE LOWER(category_name)=LOWER(%s));
