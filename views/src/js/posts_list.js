@@ -32,11 +32,9 @@ function ListItem({post}) {
     );
 }
 
-function ActionLink({value, operation}) {
+function ActionLink({value, page, setPage, operation}) {
     function handleClick() {
-        const page = document.getElementById("current_page");
-        let page_number = parseInt(page.innerHTML);
-        configurations.page = operation(page_number);
+        configurations.page = operation(page);
 
         if (configurations.page !== -1) {
             fetchPosts(createFiltersLine(configurations))
@@ -46,10 +44,10 @@ function ActionLink({value, operation}) {
                 }
                 return data;
             }).then(data => {
-                if (configurations.page !== page_number) {
+                if (configurations.page !== page) {
                     renderList(data, postsContainer);
                 }
-                page.innerHTML = configurations.page;
+                setPage(configurations.page);
             });
         }
     }
@@ -67,15 +65,30 @@ function PostsList({posts}) {
         {
             posts.map((post) => <ListItem key={post.unique_id} post={post}/>)
         }
-        {
-            <div className="pagination">
-                <ActionLink value={">"} operation={(number) => number + 1}/>
-                <a className="active" id="current_page" href="#">0</a>
-                <ActionLink value={"<"} operation={(number) => number - 1}/>
-            </div>
-        }
+        <Pagination/>
     </div>
     );
+}
+
+class Pagination extends React.Component {
+    constructor(props) {
+        super(props);
+        this.state = {page: 0};
+
+        this.setPage = (page) => {
+            this.setState({page: page});
+        }
+    }
+
+    render() {
+        return (
+            <div className="pagination">
+                <ActionLink value={">"} page={this.state.page} setPage={this.setPage} operation={(number) => number + 1}/>
+                <a className="active" id="current_page" href="#">{this.state.page}</a>
+                <ActionLink value={"<"} page={this.state.page} setPage={this.setPage} operation={(number) => number - 1}/>
+            </div>
+        )
+    }
 }
 
 function renderList(data, container) {
