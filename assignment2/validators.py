@@ -64,9 +64,6 @@ def validate_url_parameters_values(parameter_pairs: dict):
         "order": order_validation,
     }
 
-    for key, value in list(parameter_pairs.items()):
-        if key != "post_category":
-            is_valid = validator[key](value)
-
-            if not is_valid:
-                parameter_pairs.pop(key)
+    for field, handler in validator.items():
+        if field in parameter_pairs and not handler(parameter_pairs[field]):
+            parameter_pairs.pop(field)
