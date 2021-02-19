@@ -13,7 +13,7 @@ async function fetchCategories() {
         }
     }
     catch (e) {
-        console.error("No connection with server!")
+        throw Error("Can't reach connection with server to get categories");
     }
 
     return [];

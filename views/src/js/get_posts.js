@@ -15,7 +15,8 @@ async function fetchPosts(filters = "") {
         }
     }
     catch (e) {
-        console.error("No connection with server!")
+        alert("Can't reach connection with server! Try again.");
+        throw Error("Can't reach connection with server");
     }
 
     return [];
