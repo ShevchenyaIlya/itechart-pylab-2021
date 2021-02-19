@@ -4,17 +4,25 @@ import logging
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from typing import Tuple
 
-from assignment2.converters import convert_post_numeric_fields, string_to_logging_level
+from assignment2.converters import (
+    convert_post_numeric_fields,
+    convert_votes_number_pair,
+    parse_url_parameters,
+    string_to_logging_level,
+)
 from assignment2.mongodb_database import MongoDBHandler
 from assignment2.postgresql_database import PostgreSQLHandler
 from assignment2.url_processing import find_matches, get_unique_id_from_url
+from assignment2.validators import validate_url_parameters_values
 
 
 class CustomHTTPRequestHandler(BaseHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
         self.database_handler = define_using_database()
-        self.possible_endpoints = {
+        self.endpoints = {
             ("GET", r"/posts/?"): self.get_all_posts_request,
+            ("GET", r"/categories/?"): self.get_all_categories_request,
+            ("GET", r"/posts/\?.*"): self.get_all_posts_request,
             ("GET", r"/posts/.{32}/?"): self.get_single_post_request,
             ("POST", r"/posts/?"): self.post_request,
             ("DELETE", r"/posts/.{32}/?"): self.delete_request,
@@ -23,10 +31,8 @@ class CustomHTTPRequestHandler(BaseHTTPRequestHandler):
         super().__init__(*args, **kwargs)
 
     def request_handler(self, command: str, uri: str):
-        possible_endpoint = list(
-            filter(lambda key: key[0] == command, self.possible_endpoints)
-        )
-        return self.possible_endpoints.get(find_matches(possible_endpoint, uri))
+        possible_endpoint = list(filter(lambda key: key[0] == command, self.endpoints))
+        return self.endpoints.get(find_matches(possible_endpoint, uri))
 
     def _get_request_body(self) -> dict:
         content_length = int(self.headers["Content-Length"])
@@ -40,6 +46,7 @@ class CustomHTTPRequestHandler(BaseHTTPRequestHandler):
 
     def _set_content_type(self) -> None:
         self.send_header("Content-Type", "application/json")
+        self.send_header("Access-Control-Allow-Origin", "*")
         self.end_headers()
 
     def do_GET(self) -> None:
@@ -81,8 +88,19 @@ class CustomHTTPRequestHandler(BaseHTTPRequestHandler):
             self._set_response(404, "Not Found")
 
     def get_all_posts_request(self) -> Tuple[int, str, list]:
-        db_content = self.database_handler.select_all_posts()
-        return 200, "OK", db_content
+        if not (filters := parse_url_parameters(self.path)):
+            db_content = self.database_handler.select_all_posts()
+        else:
+            validate_url_parameters_values(filters)
+            convert_votes_number_pair(filters)
+
+            db_content = self.database_handler.select_all_posts(**filters, page_size=5)
+
+        return (200, "OK", db_content) if db_content else (204, "No Content", [])
+
+    def get_all_categories_request(self):
+        db_content = self.database_handler.posts_categories()
+        return (200, "OK", db_content) if db_content else (204, "No Content", [])
 
     def get_single_post_request(self):
         unique_id = get_unique_id_from_url(self.path)

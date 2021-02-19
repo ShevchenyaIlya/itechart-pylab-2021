@@ -1,4 +1,6 @@
-from pymongo import MongoClient
+from datetime import datetime
+
+from pymongo import ASCENDING, DESCENDING, MongoClient
 
 from assignment2.converters import convert_date_to_string, convert_string_to_date
 
@@ -53,14 +55,33 @@ class MongoDBHandler:
 
         return result
 
-    def select_all_posts(self):
-        all_posts = []
-        for post in self.db.posts.find({}):
+    def select_all_posts(self, page_size=0, **kwargs):
+        if page_size == 0:
+            all_posts = self.db.posts.find({})
+        else:
+            condition_filters = get_filter_groups(
+                kwargs.get("post_category", None),
+                kwargs.get("post_date", None),
+                kwargs.get("votes_number_from", None),
+                kwargs.get("votes_number_to", None),
+            )
+            all_posts = self.db.posts.find(condition_filters)
+
+            if kwargs.get("sorting_field", None) is not None:
+                all_posts.sort(
+                    kwargs.get("sorting_field", "post_date"),
+                    ASCENDING if kwargs.get("order", "ASC") == "ASC" else DESCENDING,
+                )
+
+            all_posts.skip(int(kwargs.get("page", 0)) * page_size).limit(page_size)
+
+        joined_posts = []
+        for post in all_posts:
             self._join_user_and_post_info(post)
             convert_date_to_string(post)
-            all_posts.append(post)
+            joined_posts.append(post)
 
-        return all_posts
+        return joined_posts
 
     def select_single_post(self, unique_id):
         post = self.select_post(unique_id)
@@ -108,3 +129,29 @@ class MongoDBHandler:
 
     def post_exist(self, unique_id):
         return self.db.posts.count_documents({"unique_id": unique_id}, limit=1) != 0
+
+    def posts_categories(self):
+        return self.db.posts.distinct("post_category")
+
+
+def get_filter_groups(
+    post_category=None,
+    post_date=None,
+    votes_number_from=None,
+    votes_number_to=None,
+):
+    condition_filters = {}
+
+    if post_category is not None:
+        condition_filters["post_category"] = post_category
+
+    if post_date is not None:
+        condition_filters["post_date"] = datetime.strptime(post_date, "%Y-%m-%d")
+
+    if votes_number_from is not None and votes_number_to is not None:
+        condition_filters["votes_number"] = {
+            "$gte": votes_number_from,
+            "$lte": votes_number_to,
+        }
+
+    return condition_filters

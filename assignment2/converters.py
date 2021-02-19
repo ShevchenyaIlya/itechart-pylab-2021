@@ -1,5 +1,8 @@
 import logging
 from datetime import datetime
+from urllib import parse
+
+from assignment2.validators import validate_url_parameters
 
 _date_fields = ["user_cake_day", "post_date"]
 
@@ -50,3 +53,22 @@ def convert_post_field(karma: str) -> int:
         number = int(karma)
 
     return number
+
+
+def parse_url_parameters(url_parameters: str):
+    url_parameters = parse.urlsplit(url_parameters).query
+    filters = parse.parse_qs(url_parameters)
+
+    return {
+        key: value[0] for key, value in filters.items() if validate_url_parameters(key)
+    }
+
+
+def convert_votes_number_pair(filters: dict):
+    if filters.get("votes_number", None) is not None:
+        votes_number_from, votes_number_to = list(
+            map(int, filters.get("votes_number").split("-"))
+        )
+        filters.pop("votes_number")
+        filters["votes_number_from"] = votes_number_from
+        filters["votes_number_to"] = votes_number_to

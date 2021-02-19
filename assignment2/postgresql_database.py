@@ -1,6 +1,7 @@
 import json
 
 import psycopg2
+from psycopg2.extensions import AsIs
 
 
 def load_database_connection_settings():
@@ -57,6 +58,11 @@ class PostgreSQLHandler:
                 ),
             )
 
+        if not self.category_exist(post["post_category"]):
+            self.cursor.execute(
+                self.get_query("insert_category"), (post["post_category"],)
+            )
+
         self.cursor.execute(
             self.get_query("insert_post"),
             (
@@ -111,10 +117,25 @@ class PostgreSQLHandler:
         )
         self.connection.commit()
 
-    def select_all_posts(self):
-        self.cursor.execute(self.get_query("select_all_posts"))
-        rows = self.cursor.fetchall()
+    def select_all_posts(self, page_size=0, **kwargs):
+        if page_size == 0:
+            self.cursor.execute(self.get_query("select_all_posts"))
+        else:
+            self.cursor.execute(
+                self.get_query("select_all_posts_with_filters"),
+                (
+                    kwargs.get("post_category", None),
+                    kwargs.get("post_date", None),
+                    kwargs.get("votes_number_from", None),
+                    kwargs.get("votes_number_to", None),
+                    AsIs(kwargs.get("sorting_field", "post_date")),
+                    AsIs(kwargs.get("order", "ASC")),
+                    page_size,
+                    int(kwargs.get("page", 0)) * page_size,
+                ),
+            )
 
+        rows = self.cursor.fetchall()
         return [convert_selected_data(row) for row in rows]
 
     def select_single_post(self, unique_id):
@@ -131,12 +152,20 @@ class PostgreSQLHandler:
         self.cursor.execute(self.get_query("row_count"))
         return self.cursor.fetchall()[0][0]
 
+    def posts_categories(self):
+        self.cursor.execute(self.get_query("select_all_categories"))
+        return self.cursor.fetchall()
+
     def post_exist(self, unique_id):
         self.cursor.execute(self.get_query("post_exists"), (unique_id,))
         return self.cursor.fetchall()[0][0]
 
     def user_exist(self, username):
         self.cursor.execute(self.get_query("user_exists"), (username,))
+        return self.cursor.fetchall()[0][0]
+
+    def category_exist(self, category):
+        self.cursor.execute(self.get_query("category_exists"), (category,))
         return self.cursor.fetchall()[0][0]
 
     def close_connection(self):
@@ -155,5 +184,5 @@ def convert_selected_data(row):
         "post_date": str(row[3]),
         "comments_number": row[4],
         "votes_number": row[5],
-        "post_category": row[6],
+        "post_category": row[15],
     }
