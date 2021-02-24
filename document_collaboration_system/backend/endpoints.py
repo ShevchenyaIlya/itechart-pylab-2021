@@ -35,7 +35,7 @@ def login() -> Tuple[Any, int]:
 @jwt_required()
 def create_document() -> Tuple[Any, int]:
     document_name = request.data.decode("utf-8")
-    document_identifier = mongo.create_document(document_name)
+    document_identifier = mongo.create_document(document_name, get_jwt_identity())
 
     if document_identifier is None:
         return jsonify([]), 403
