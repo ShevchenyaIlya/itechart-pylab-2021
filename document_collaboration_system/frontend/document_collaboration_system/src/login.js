@@ -1,7 +1,7 @@
 import {Avatar, Button, Paper, TextField} from "@material-ui/core";
 import React, {useState} from "react";
-import {send_request} from './send_request'
-import "./css/login.css"
+import {send_request} from './send_request';
+import "./css/login.css";
 import {
   Link,
   useHistory
@@ -26,7 +26,7 @@ function Login() {
               history.push("");
           }
       });
-    }
+    };
     return (
       <Paper elevation={3} className="loginPaperStyle">
         <form noValidate autoComplete="off" onSubmit={handler}>
@@ -37,7 +37,7 @@ function Login() {
           <Link to="/">Home</Link>
         </form>
       </Paper>
-    )
+    );
 }
 
 export default Login;

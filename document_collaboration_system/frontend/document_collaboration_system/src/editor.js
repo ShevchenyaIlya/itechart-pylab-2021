@@ -26,7 +26,7 @@ class ControlledEditor extends Component {
           });
         }
       });
-    }
+    };
 
     this.onEditorStateChange = (editorState) => {
       if (sessionStorage.getItem("token") === null) {
@@ -60,12 +60,12 @@ class ControlledEditor extends Component {
           editorClassName="demo-editor"
           onEditorStateChange={this.onEditorStateChange}
         />
-    )
+    );
   }
 }
 
 function DocumentEditor({document}) {
-  const history = useHistory()
+  const history = useHistory();
   return (
     <Paper elevation={3} className="editorContainer">
       <ControlledEditor document={document} history={history}/>
@@ -73,4 +73,4 @@ function DocumentEditor({document}) {
   );
 }
 
-export default DocumentEditor
+export default DocumentEditor;

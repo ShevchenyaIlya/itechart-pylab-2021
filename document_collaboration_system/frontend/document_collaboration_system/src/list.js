@@ -6,7 +6,7 @@ import ListItemIcon from '@material-ui/core/ListItemIcon';
 import ListItemText from '@material-ui/core/ListItemText';
 import Divider from '@material-ui/core/Divider';
 import DraftsIcon from '@material-ui/icons/Drafts';
-import {send_request} from "./send_request"
+import {send_request} from "./send_request";
 import {useHistory} from "react-router-dom";
 
 const useStyles = makeStyles((theme) => ({
@@ -30,13 +30,13 @@ export default function SimpleList() {
     else {
       send_request("GET", "documents").then(data => {
         setDocuments(data);
-      })
+      });
     }
-  }, [])
+  }, []);
 
   const handler = (identifier) => (event) => {
-      history.push("document/" + identifier)
-  }
+      history.push("document/" + identifier);
+  };
 
   return (
     <div className={classes.root}>

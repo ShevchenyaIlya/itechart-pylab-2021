@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React from 'react';
 import ReactDOM from 'react-dom';
 import './css/index.css';
 import App from './App';
@@ -16,10 +16,10 @@ import {
 class Index extends React.Component{
   constructor(props) {
     super(props);
-    this.state = {nickname: "", session_token: "", document: ""}
+    this.state = {nickname: "", session_token: "", document: ""};
 
     this.updateState = (field) => (value) => {
-        this.setState({[field]: value})
+        this.setState({[field]: value});
     };
   }
 

@@ -7,19 +7,19 @@ import {useHistory} from "react-router-dom";
 
 function Navbar(){
     let [username, setUsername] = useState(sessionStorage.getItem("username"));
-    const history = useHistory()
+    const history = useHistory();
 
     const logoutUser = (event) => {
         event.preventDefault();
         sessionStorage.removeItem("username");
         sessionStorage.removeItem("token");
         setUsername("");
-        history.push("/")
-    }
+        history.push("/");
+    };
 
     useEffect(() => {
-        setUsername(sessionStorage.getItem("username"))
-    })
+        setUsername(sessionStorage.getItem("username"));
+    }, []);
 
     return (
         <div className="navbar">
@@ -30,7 +30,7 @@ function Navbar(){
                 <Link className="right" to="#" onClick={logoutUser}>{username}</Link>
             </div>
         </div>
-    )
+    );
 }
 
 export default Navbar;

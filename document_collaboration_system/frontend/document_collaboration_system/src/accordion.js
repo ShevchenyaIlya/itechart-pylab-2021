@@ -8,7 +8,7 @@ import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import {Button, TextField} from "@material-ui/core";
 import {send_request} from "./send_request";
 import {useHistory} from "react-router-dom";
-import "./css/base.css"
+import "./css/base.css";
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -28,7 +28,7 @@ const useStyles = makeStyles((theme) => ({
 export default function ControlledAccordions({setDocument}) {
   const classes = useStyles();
   const history = useHistory();
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = React.useState(false);
   const [documentIdentifier, setDocumentName] = useState("");
 
   const handleChange = (panel) => (event, isExpanded) => {
@@ -38,7 +38,7 @@ export default function ControlledAccordions({setDocument}) {
   const submitDocumentCreating = (event) => {
     event.preventDefault();
     if (sessionStorage.getItem("username") === null) {
-      history.push("login")
+      history.push("login");
     }
     else {
       send_request("POST", "document", documentIdentifier).then((data) => {
@@ -47,16 +47,16 @@ export default function ControlledAccordions({setDocument}) {
           history.push("document/" + data);
         }
         else {
-          alert("Please use another document name!")
+          alert("Please use another document name!");
         }
       });
     }
-  }
+  };
 
   const submitDocumentOpening = (event) => {
     event.preventDefault();
     if (sessionStorage.getItem("username") === null) {
-      history.push("login")
+      history.push("login");
     }
     else {
       send_request("GET", "document/" + documentIdentifier).then((data) => {
@@ -64,15 +64,15 @@ export default function ControlledAccordions({setDocument}) {
           history.push("document/" + data.id);
         }
         else {
-          alert("Please use another document name!")
+          alert("Please use another document name!");
         }
       });
     }
-  }
+  };
 
   return (
     <div className="createDocument">
-      <Accordion>
+      <Accordion expanded={expanded === 'panel1'} onChange={handleChange('panel1')}>
         <AccordionSummary
           expandIcon={<ExpandMoreIcon />}
           aria-controls="panel1a-content"
@@ -90,7 +90,7 @@ export default function ControlledAccordions({setDocument}) {
           </form>
         </AccordionDetails>
       </Accordion>
-      <Accordion>
+      <Accordion expanded={expanded === 'panel2'} onChange={handleChange('panel2')}>
         <AccordionSummary
           expandIcon={<ExpandMoreIcon />}
           aria-controls="panel2a-content"

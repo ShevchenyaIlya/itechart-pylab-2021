@@ -25,8 +25,8 @@ function config_request_url(endpoint) {
 
 async function send_request(method, endpoint, body=null) {
     const token = sessionStorage.getItem("token");
-    const url = config_request_url(endpoint)
-    console.log(url)
+    const url = config_request_url(endpoint);
+    console.log(url);
 
     try {
         const response_data  = await fetch(url, {
