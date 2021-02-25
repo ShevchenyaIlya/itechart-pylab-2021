@@ -64,7 +64,11 @@ def update_document_content(identifier: str) -> Tuple[Any, int]:
         content = request.get_json()
         mongo.update_document(identifier, "content", content)
     elif request.method == "DELETE":
-        mongo.delete_document(identifier)
+        user_identifier = get_jwt_identity()
+        if not mongo.delete_document(identifier, user_identifier):
+            return jsonify(
+                {"message": "You should be document creator to delete this document!"}
+            )
 
     return jsonify({}), 200
 

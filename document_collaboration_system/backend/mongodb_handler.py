@@ -100,9 +100,15 @@ class MongoDBHandler:
 
         return False
 
-    def delete_document(self, document_id: str) -> None:
-        if ObjectId.is_valid(document_id):
-            self.db.posts.delete_one({"_id": ObjectId(document_id)})
+    def delete_document(self, document_id: str, user_id: str) -> bool:
+        user: Dict = cast(Dict, self.find_user_by_id(ObjectId(user_id)))
+        document: Dict = cast(Dict, self.find_document(document_id))
+
+        if user["username"] == document["creator"]:
+            self.db.documents.delete_one({"_id": ObjectId(document_id)})
+            return True
+
+        return False
 
     def document_exist(self, document_name: str) -> bool:
         return (
