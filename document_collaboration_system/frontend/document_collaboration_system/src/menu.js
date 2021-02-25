@@ -4,10 +4,12 @@ import Menu from '@material-ui/core/Menu';
 import MenuItem from '@material-ui/core/MenuItem';
 import './css/base.css';
 import {send_request} from "./send_request";
+import {useHistory} from "react-router-dom";
 
 
 export default function CustomMenu({document}) {
   const [anchorEl, setAnchorEl] = React.useState(null);
+  const history = useHistory();
 
   const handleClick = (event) => {
     setAnchorEl(event.currentTarget);
@@ -29,6 +31,18 @@ export default function CustomMenu({document}) {
       handleClose();
   };
 
+  const deleteDocument = () => {
+    send_request("DELETE", 'document/' + document).then((response) => {
+        if (typeof response.message !== 'undefined') {
+            alert(response.message);
+        }
+        else {
+            history.push("/");
+        }
+    });
+    handleClose();
+  };
+
   return (
     <div>
       <Button aria-controls="simple-menu" aria-haspopup="true" onClick={handleClick}  id="menuButton">
@@ -44,6 +58,7 @@ export default function CustomMenu({document}) {
         <MenuItem onClick={documentOperation("approve")} className="menuListItem">Agreed</MenuItem>
         <MenuItem onClick={documentOperation("sign")}>Signing</MenuItem>
         <MenuItem onClick={documentOperation("archive")}>Archive</MenuItem>
+        <MenuItem onClick={deleteDocument}>Delete</MenuItem>
       </Menu>
     </div>
   );
