@@ -5,7 +5,7 @@ import ListItem from '@material-ui/core/ListItem';
 import ListItemIcon from '@material-ui/core/ListItemIcon';
 import ListItemText from '@material-ui/core/ListItemText';
 import Divider from '@material-ui/core/Divider';
-import DraftsIcon from '@material-ui/icons/Drafts';
+import DescriptionIcon from '@material-ui/icons/Description';
 import {send_request} from "./send_request";
 import {useHistory} from "react-router-dom";
 
@@ -54,9 +54,12 @@ export default function SimpleList() {
                 documents.map((single_document) =>
                     <ListItem button key={single_document._id} onClick={handler(single_document._id)}>
                         <ListItemIcon>
-                            <DraftsIcon/>
+                            <DescriptionIcon/>
                         </ListItemIcon>
-                        <ListItemText primary={single_document.document_name + " " + single_document._id}/>
+                        <ListItemText primary={single_document.document_name} secondary={single_document.creation_date}/>
+                        <ListItemText primary={"Creator"} secondary={single_document.creator}/>
+                        <ListItemText secondary={single_document.status}/>
+                        <ListItemText secondary={single_document._id}/>
                     </ListItem>
                 )
             }
