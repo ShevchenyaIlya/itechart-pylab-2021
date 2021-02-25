@@ -8,7 +8,7 @@ import {AppContext} from "./index";
 
 function Navbar(){
     const history = useHistory();
-    const {name} = useContext(AppContext);
+    const {name, alertContent} = useContext(AppContext);
     let [username, setUsername] = name;
 
     const logoutUser = (event) => {
@@ -16,6 +16,7 @@ function Navbar(){
         sessionStorage.clear();
         setUsername("");
         history.push("/");
+        alertContent.handler({alertOpen: true, alertMessage: "You logout!", type: "success"});
     };
 
     useEffect(() => {

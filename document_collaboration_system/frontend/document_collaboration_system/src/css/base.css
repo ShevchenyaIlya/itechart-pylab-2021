@@ -75,6 +75,15 @@ body {
     min-width: 140px;
 }
 
+#customEditorButton {
+    margin-top: auto;
+    margin-Bottom: auto;
+}
+
+#customEditorButton:hover {
+    cursor: pointer;
+}
+
 @media screen and (max-width: 500px) {
     .navbar a {
         float: none;

@@ -54,7 +54,9 @@ def update_document_content(identifier: str) -> Tuple[Any, int]:
         if document_content is not None:
             return (
                 jsonify(
-                    content=document_content["content"], id=str(document_content["_id"])
+                    content=document_content["content"],
+                    id=str(document_content["_id"]),
+                    status=document_content["status"],
                 ),
                 200,
             )

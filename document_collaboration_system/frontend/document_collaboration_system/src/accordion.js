@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useContext, useState} from 'react';
 import { makeStyles } from '@material-ui/core/styles';
 import Accordion from '@material-ui/core/Accordion';
 import AccordionDetails from '@material-ui/core/AccordionDetails';
@@ -8,6 +8,7 @@ import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import {Button, TextField} from "@material-ui/core";
 import {send_request} from "./send_request";
 import {useHistory} from "react-router-dom";
+import {AppContext} from "./index";
 import "./css/base.css";
 
 const useStyles = makeStyles((theme) => ({
@@ -28,6 +29,7 @@ const useStyles = makeStyles((theme) => ({
 export default function ControlledAccordions({setDocument}) {
   const classes = useStyles();
   const history = useHistory();
+  const {alertContent} = useContext(AppContext);
   const [expanded, setExpanded] = React.useState(false);
   const [documentIdentifier, setDocumentName] = useState("");
 
@@ -38,6 +40,7 @@ export default function ControlledAccordions({setDocument}) {
   const submitDocumentCreating = (event) => {
     event.preventDefault();
     if (sessionStorage.getItem("username") === null) {
+      alertContent.handler({alertOpen: true, alertMessage: "Please login!", type: "warning"});
       history.push("login");
     }
     else {
@@ -50,11 +53,11 @@ export default function ControlledAccordions({setDocument}) {
             history.push("document/" + data);
           }
           else {
-            alert(message);
+            alertContent.handler({alertOpen: true, alertMessage: message, type: "error"});
           }
         }
         else {
-          alert("Please use another document name!");
+          alertContent.handler({alertOpen: true, alertMessage: "Please use another document name!", type: "warning"});
         }
       });
     }
@@ -63,6 +66,7 @@ export default function ControlledAccordions({setDocument}) {
   const submitDocumentOpening = (event) => {
     event.preventDefault();
     if (sessionStorage.getItem("username") === null) {
+      alertContent.handler({alertOpen: true, alertMessage: "Please login!", type: "warning"});
       history.push("login");
     }
     else {
@@ -71,7 +75,7 @@ export default function ControlledAccordions({setDocument}) {
           history.push("document/" + data.id);
         }
         else {
-          alert("Please use another document name!");
+          alertContent.handler({alertOpen: true, alertMessage: "Please use another document name!", type: "warning"});
         }
       });
     }

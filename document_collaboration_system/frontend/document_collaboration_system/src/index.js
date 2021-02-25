@@ -12,13 +12,14 @@ import {
   Switch,
   Route,
 } from "react-router-dom";
+import CustomizedSnackbars from "./customAlert";
 
 export const AppContext = createContext();
 
 class Index extends React.Component{
   constructor(props) {
     super(props);
-    this.state = {nickname: "", session_token: "", document: ""};
+    this.state = {nickname: "", session_token: "", document: "", customAlert: {alertOpen: false, alertMessage: "", type: ""}};
 
     this.updateState = (field) => (value) => {
         this.setState({[field]: value});
@@ -32,7 +33,7 @@ class Index extends React.Component{
 
   render() {
     return (
-        <AppContext.Provider value={{name: [this.state.nickname, this.updateState("nickname")]}}>
+        <AppContext.Provider value={{name: [this.state.nickname, this.updateState("nickname")], alertContent: {configurations: this.state.customAlert, handler: this.updateState("customAlert")}}}>
           <Router>
             <Switch>
               <Route exact path="/login">
@@ -49,6 +50,7 @@ class Index extends React.Component{
               </Route>
             </Switch>
           </Router>
+          <CustomizedSnackbars/>
         </AppContext.Provider>
     );
   }

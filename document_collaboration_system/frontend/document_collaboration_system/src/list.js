@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useContext, useEffect, useState} from 'react';
 import { makeStyles } from '@material-ui/core/styles';
 import List from '@material-ui/core/List';
 import ListItem from '@material-ui/core/ListItem';
@@ -8,6 +8,7 @@ import Divider from '@material-ui/core/Divider';
 import DescriptionIcon from '@material-ui/icons/Description';
 import {send_request} from "./send_request";
 import {useHistory} from "react-router-dom";
+import {AppContext} from "./index";
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -24,10 +25,12 @@ const useStyles = makeStyles((theme) => ({
 export default function SimpleList() {
   const classes = useStyles();
   const history = useHistory();
+  const {alertContent} = useContext(AppContext);
   let [documents, setDocuments] = useState([]);
 
   useEffect(() => {
     if (sessionStorage.getItem("token") === null) {
+      alertContent.handler({alertOpen: true, alertMessage: "Please login!", type: "warning"});
       history.push("/login");
     }
     else {
