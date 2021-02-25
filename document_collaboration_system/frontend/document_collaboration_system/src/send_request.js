@@ -26,7 +26,6 @@ function config_request_url(endpoint) {
 async function send_request(method, endpoint, body=null) {
     const token = sessionStorage.getItem("token");
     const url = config_request_url(endpoint);
-    console.log(url);
 
     try {
         const response_data  = await fetch(url, {
@@ -36,16 +35,18 @@ async function send_request(method, endpoint, body=null) {
             mode: 'cors',
             async: true,
         });
-        if (response_data.status === 200) {
+
+        if ([200, 403].includes(response_data.status)) {
             return response_data.json();
+        }
+        else {
+            return null;
         }
     }
     catch (e) {
         alert("Can't reach connection with server! Try again.");
         throw Error("Can't reach connection with server");
     }
-
-    return null;
 }
 
 export {send_request};

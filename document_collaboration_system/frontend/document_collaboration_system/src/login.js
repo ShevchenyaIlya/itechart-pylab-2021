@@ -20,8 +20,9 @@ function Login() {
               alert("Such user does not exists!");
           }
           else {
-              const {username, token} = response_data;
+              const {username, token, id} = response_data;
               sessionStorage.setItem("token", token);
+              sessionStorage.setItem("id", id);
               sessionStorage.setItem("username", username);
               history.push("");
           }

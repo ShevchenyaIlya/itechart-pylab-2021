@@ -43,8 +43,15 @@ export default function ControlledAccordions({setDocument}) {
     else {
       send_request("POST", "document", documentIdentifier).then((data) => {
         if (data !== null) {
-          setDocument(data);
-          history.push("document/" + data);
+          const {message} = data;
+
+          if (typeof message === 'undefined') {
+            setDocument(data);
+            history.push("document/" + data);
+          }
+          else {
+            alert(message);
+          }
         }
         else {
           alert("Please use another document name!");

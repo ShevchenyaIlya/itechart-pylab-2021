@@ -5,7 +5,7 @@ import "react-draft-wysiwyg/dist/react-draft-wysiwyg.css";
 import {Paper} from "@material-ui/core";
 import {send_request} from "./send_request";
 import {useHistory} from "react-router-dom";
-
+import CustomMenu from "./menu";
 
 class ControlledEditor extends Component {
   constructor(props) {
@@ -18,6 +18,10 @@ class ControlledEditor extends Component {
 
     this.loadInitialContent = () => {
       send_request("GET", "document/" + this.document_id).then((content) => {
+        if (content === null) {
+          this.props.history.push("/");
+        }
+
         if (Object.keys(content.content).length !== 0) {
           const DBEditorState = convertFromRaw(content.content);
           const local_state = EditorState.createWithContent(DBEditorState);
@@ -51,6 +55,7 @@ class ControlledEditor extends Component {
     clearInterval(this.timer);
     this.timer = null;
   }
+
   render() {
     const { editorState } = this.state;
     return (
@@ -67,9 +72,12 @@ class ControlledEditor extends Component {
 function DocumentEditor({document}) {
   const history = useHistory();
   return (
-    <Paper elevation={3} className="editorContainer">
-      <ControlledEditor document={document} history={history}/>
-    </Paper>
+      <>
+        <CustomMenu document={document}/>
+        <Paper elevation={3} className="editorContainer">
+          <ControlledEditor document={document} history={history}/>
+        </Paper>
+      </>
   );
 }
 

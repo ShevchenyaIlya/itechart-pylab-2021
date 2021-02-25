@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {createContext} from 'react';
 import ReactDOM from 'react-dom';
 import './css/index.css';
 import App from './App';
@@ -12,6 +12,8 @@ import {
   Switch,
   Route,
 } from "react-router-dom";
+
+export const AppContext = createContext();
 
 class Index extends React.Component{
   constructor(props) {
@@ -30,7 +32,7 @@ class Index extends React.Component{
 
   render() {
     return (
-        <>
+        <AppContext.Provider value={{name: [this.state.nickname, this.updateState("nickname")]}}>
           <Router>
             <Switch>
               <Route exact path="/login">
@@ -47,7 +49,7 @@ class Index extends React.Component{
               </Route>
             </Switch>
           </Router>
-        </>
+        </AppContext.Provider>
     );
   }
 }

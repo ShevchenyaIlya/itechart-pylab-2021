@@ -65,6 +65,16 @@ body {
     min-height: 1000px
 }
 
+#menuButton {
+    min-width: 140px;
+    float: left;
+    margin: 10px;
+}
+
+.menuListItem {
+    min-width: 140px;
+}
+
 @media screen and (max-width: 500px) {
     .navbar a {
         float: none;

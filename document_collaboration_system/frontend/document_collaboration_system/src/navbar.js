@@ -1,18 +1,19 @@
-import React, {useEffect, useState} from 'react';
+import React, {useContext, useEffect} from 'react';
 import './css/base.css';
 import {
   Link,
 } from "react-router-dom";
 import {useHistory} from "react-router-dom";
+import {AppContext} from "./index";
 
 function Navbar(){
-    let [username, setUsername] = useState(sessionStorage.getItem("username"));
     const history = useHistory();
+    const {name} = useContext(AppContext);
+    let [username, setUsername] = name;
 
     const logoutUser = (event) => {
         event.preventDefault();
-        sessionStorage.removeItem("username");
-        sessionStorage.removeItem("token");
+        sessionStorage.clear();
         setUsername("");
         history.push("/");
     };

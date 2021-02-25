@@ -16,6 +16,9 @@ const useStyles = makeStyles((theme) => ({
     margin: "auto",
     backgroundColor: theme.palette.background.paper,
   },
+  container: {
+    minHeight: "600px",
+  }
 }));
 
 export default function SimpleList() {
@@ -29,7 +32,12 @@ export default function SimpleList() {
     }
     else {
       send_request("GET", "documents").then(data => {
-        setDocuments(data);
+        if (data !== null) {
+          setDocuments(data);
+        }
+        else {
+          history.push("/login");
+        }
       });
     }
   }, []);
@@ -39,20 +47,22 @@ export default function SimpleList() {
   };
 
   return (
-    <div className={classes.root}>
-      <List component="nav" aria-label="main mailbox folders">
-          {
-              documents.map((single_document) =>
-                  <ListItem button key={single_document._id} onClick={handler(single_document._id)}>
-                      <ListItemIcon>
-                          <DraftsIcon/>
-                      </ListItemIcon>
-                      <ListItemText primary={single_document.document_name + " " + single_document._id}/>
-                  </ListItem>
-              )
-          }
-      </List>
-      <Divider />
+    <div className={classes.container}>
+      <div className={classes.root}>
+        <List component="nav" aria-label="main mailbox folders">
+            {
+                documents.map((single_document) =>
+                    <ListItem button key={single_document._id} onClick={handler(single_document._id)}>
+                        <ListItemIcon>
+                            <DraftsIcon/>
+                        </ListItemIcon>
+                        <ListItemText primary={single_document.document_name + " " + single_document._id}/>
+                    </ListItem>
+                )
+            }
+        </List>
+        <Divider />
+      </div>
     </div>
   );
 }
