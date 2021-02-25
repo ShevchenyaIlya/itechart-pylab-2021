@@ -43,6 +43,10 @@ export default function CustomMenu({document}) {
     handleClose();
   };
 
+  const getDocumentLink = () => {
+      navigator.clipboard.writeText("localhost:3000" + history.location.pathname);
+  };
+
   return (
     <div>
       <Button aria-controls="simple-menu" aria-haspopup="true" onClick={handleClick}  id="menuButton">
@@ -59,6 +63,7 @@ export default function CustomMenu({document}) {
         <MenuItem onClick={documentOperation("sign")}>Signing</MenuItem>
         <MenuItem onClick={documentOperation("archive")}>Archive</MenuItem>
         <MenuItem onClick={deleteDocument}>Delete</MenuItem>
+        <MenuItem onClick={getDocumentLink}>Link</MenuItem>
       </Menu>
     </div>
   );

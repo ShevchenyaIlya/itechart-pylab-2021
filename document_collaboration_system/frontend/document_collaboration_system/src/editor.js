@@ -21,8 +21,7 @@ class ControlledEditor extends Component {
         if (content === null) {
           this.props.history.push("/");
         }
-
-        if (Object.keys(content.content).length !== 0) {
+        else if (Object.keys(content.content).length !== 0) {
           const DBEditorState = convertFromRaw(content.content);
           const local_state = EditorState.createWithContent(DBEditorState);
           this.setState({

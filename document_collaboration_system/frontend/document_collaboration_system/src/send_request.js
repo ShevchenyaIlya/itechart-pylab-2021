@@ -37,7 +37,7 @@ async function send_request(method, endpoint, body=null) {
         });
 
         if ([200, 403].includes(response_data.status)) {
-            return response_data.json();
+            return await response_data.json();
         }
         else {
             return null;
