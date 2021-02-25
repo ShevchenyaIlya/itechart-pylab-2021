@@ -1,10 +1,12 @@
 from datetime import datetime
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional, cast
 
 from bson.objectid import ObjectId
-from document_status import Status
 from pymongo import MongoClient
-from validators import role_validation
+
+from .document_status import Status
+from .role import Role
+from .validators import role_validation
 
 
 class MongoDBHandler:
@@ -15,7 +17,11 @@ class MongoDBHandler:
     def create_user(
         self, username: str, user_role: str, company: str
     ) -> Optional[ObjectId]:
-        if role_validation(user_role) and not self.user_exist(username, company):
+        if (
+            role_validation(user_role)
+            and not self.user_exist(username, company)
+            and self.is_company_user_limit(company, user_role)
+        ):
             return self.db.users.insert_one(
                 {
                     "username": username,
@@ -42,12 +48,18 @@ class MongoDBHandler:
 
     def update_user_role(self, user_id: str, new_role: str) -> None:
         if role_validation(new_role) and ObjectId.is_valid(user_id):
-            self.db.users.update_one(
-                {"_id": ObjectId(user_id)}, {"$set": {"role": new_role}}, upsert=False
-            )
+            user: Dict = cast(Dict, self.find_user_by_id(ObjectId(user_id)))
+            company = user["company"]
+
+            if self.is_company_user_limit(company, new_role):
+                self.db.users.update_one(
+                    {"_id": ObjectId(user_id)},
+                    {"$set": {"role": new_role}},
+                    upsert=False,
+                )
 
     def create_document(self, document_name: str, creator: str) -> Optional[Dict]:
-        user = self.find_user_by_name(creator)
+        user = self.find_user_by_id(ObjectId(creator))
 
         if not self.document_exist(document_name) and user is not None:
             return self.db.documents.insert_one(
@@ -57,16 +69,36 @@ class MongoDBHandler:
                     "status": Status.CREATED,
                     "creator": user["username"],
                     "company": user["company"],
+                    "signed": [],
+                    "approved": [],
                     "content": {},
                 }
             ).inserted_id
 
         return None
 
-    def update_document(self, document_id: str, content: Dict) -> None:
+    def update_document(self, document_id: str, field: str, content: Any) -> None:
         self.db.documents.update_one(
-            {"_id": ObjectId(document_id)}, {"$set": {"content": content}}, upsert=False
+            {"_id": ObjectId(document_id)}, {"$set": {field: content}}, upsert=False
         )
+
+    def is_approved_by_company(self, document_id: str, company_name: str) -> bool:
+        document: Dict = cast(Dict, self.find_document(document_id))
+        lawyer_approve, economist_approve = False, False
+
+        for approved_by in document["approved"]:
+            user = self.find_user_by_id(ObjectId(approved_by))
+
+            if user is not None and user["company"] == company_name:
+                if user["role"] == Role.LAWYER:
+                    lawyer_approve = True
+                elif user["role"] == Role.ECONOMIST:
+                    economist_approve = True
+
+                if lawyer_approve and economist_approve:
+                    return True
+
+        return False
 
     def delete_document(self, document_id: str) -> None:
         if ObjectId.is_valid(document_id):
@@ -78,6 +110,17 @@ class MongoDBHandler:
             != 0
         )
 
+    def is_company_user_limit(self, company: str, role: str) -> bool:
+        user_limit = {
+            Role.LAWYER: 3,
+            Role.ECONOMIST: 3,
+            Role.GENERAL_DIRECTOR: 1,
+        }
+        return (
+            self.db.users.count_documents({"company": company, "role": role})
+            < user_limit[role]
+        )
+
     def find_document(self, document_id: str) -> Optional[Dict]:
         if ObjectId.is_valid(document_id):
             return self.db.documents.find_one({"_id": ObjectId(document_id)})
@@ -86,3 +129,6 @@ class MongoDBHandler:
 
     def select_all_documents(self) -> List:
         return list(self.db.documents.find({}))
+
+    def select_company_documents(self, company: str) -> List:
+        return list(self.db.documents.find({"company": company}))

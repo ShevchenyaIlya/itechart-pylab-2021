@@ -1,6 +1,6 @@
-import json
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, cast
 
+from bson import ObjectId
 from flask import Flask, Response, jsonify, request
 from flask_jwt_extended import (
     JWTManager,
@@ -8,8 +8,10 @@ from flask_jwt_extended import (
     get_jwt_identity,
     jwt_required,
 )
-from mongodb_handler import MongoDBHandler
-from role import Role
+
+from .document_status import Status
+from .mongodb_handler import MongoDBHandler
+from .role import Role
 
 app = Flask(__name__)
 app.config["MONGO_URI"] = "mongodb://localhost:27017/myDatabase"
@@ -21,14 +23,14 @@ mongo = MongoDBHandler()
 @app.route('/login', methods=["POST"])
 def login() -> Tuple[Any, int]:
     nickname = request.data.decode("utf-8")
-    # mongo.create_user(nickname, Role.LAWYER, "A")
+    # mongo.create_user(nickname, Role.GENERAL_DIRECTOR, "C")
     user = mongo.find_user_by_name(nickname)
 
     if user is None:
         return jsonify(nickname), 404
 
-    access_token = create_access_token(identity=nickname)
-    return jsonify(token=access_token, username=nickname), 200
+    access_token = create_access_token(identity=str(user["_id"]))
+    return jsonify(token=access_token, username=nickname, id=str(user["_id"])), 200
 
 
 @app.route('/document', methods=["POST"])
@@ -38,7 +40,7 @@ def create_document() -> Tuple[Any, int]:
     document_identifier = mongo.create_document(document_name, get_jwt_identity())
 
     if document_identifier is None:
-        return jsonify([]), 403
+        return jsonify({"message": "Document already exist!"}), 403
 
     return jsonify(str(document_identifier)), 200
 
@@ -60,7 +62,7 @@ def update_document_content(identifier: str) -> Tuple[Any, int]:
         return jsonify({}), 404
     elif request.method == "PUT":
         content = request.get_json()
-        mongo.update_document(identifier, content)
+        mongo.update_document(identifier, "content", content)
     elif request.method == "DELETE":
         mongo.delete_document(identifier)
 
@@ -70,13 +72,79 @@ def update_document_content(identifier: str) -> Tuple[Any, int]:
 @app.route('/documents', methods=["GET"])
 @jwt_required()
 def get_documents() -> Tuple[Any, int]:
-    documents = mongo.select_all_documents()
+    user_identifier = get_jwt_identity()
+    user: Dict = cast(Dict, mongo.find_user_by_id(ObjectId(user_identifier)))
+
+    documents = mongo.select_company_documents(user["company"])
 
     for document in documents:
         document.pop("content")
         document["_id"] = str(document["_id"])
 
     return jsonify(documents), 200
+
+
+@app.route('/approve/<document_id>', methods=["POST"])
+@jwt_required()
+def approve_document(document_id: str) -> Tuple[Any, int]:
+    user_identifier = get_jwt_identity()
+    document: Dict = cast(Dict, mongo.find_document(document_id))
+    user: Dict = cast(Dict, mongo.find_user_by_id(ObjectId(user_identifier)))
+
+    if user["role"] not in [Role.LAWYER, Role.ECONOMIST]:
+        return jsonify({"message": "Invalid role for approving document!"}), 403
+
+    if user_identifier in document["approved"]:
+        return jsonify({"message": "Document already approved by you!"}), 403
+
+    document["approved"].append(user_identifier)
+    mongo.update_document(document_id, "approved", document["approved"])
+    mongo.update_document(document_id, "status", Status.AGREED)
+
+    return jsonify({}), 200
+
+
+@app.route('/sign/<document_id>', methods=["POST"])
+@jwt_required()
+def sign_document(document_id: str) -> Tuple[Any, int]:
+    user_identifier = get_jwt_identity()
+    document = cast(Dict, mongo.find_document(document_id))
+    user = cast(Dict, mongo.find_user_by_id(ObjectId(user_identifier)))
+
+    if (
+        user["role"] != Role.GENERAL_DIRECTOR
+        or document["status"] not in [Status.AGREED, Status.SIGNING]
+        or not mongo.is_approved_by_company(document_id, user["company"])
+    ):
+        return jsonify({"message": "Signing validation failed!"}), 403
+
+    if user_identifier in document["signed"] or len(document["signed"]) >= 3:
+        return jsonify({"message": "Already signed!"})
+
+    document["signed"].append(user_identifier)
+    mongo.update_document(document_id, "signed", document["signed"])
+    mongo.update_document(document_id, "status", Status.SIGNING)
+
+    return jsonify({}), 200
+
+
+@app.route('/archive/<document_id>', methods=["POST"])
+@jwt_required()
+def archive_document(document_id: str) -> Tuple[Any, int]:
+    user_identifier = get_jwt_identity()
+    document: Dict = cast(Dict, mongo.find_document(document_id))
+    user: Dict = cast(Dict, mongo.find_user_by_id(ObjectId(user_identifier)))
+
+    if (
+        document["company"] != user["company"]
+        or document["status"] != Status.SIGNING
+        or len(document["signed"]) < 2
+    ):
+        return jsonify({"message": "Sign document before archive!"}), 403
+
+    mongo.update_document(document_id, "status", Status.ARCHIVE)
+
+    return jsonify({}), 200
 
 
 @app.after_request

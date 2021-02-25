@@ -1,4 +1,4 @@
-from role import Role
+from .role import Role
 
 
 def role_validation(role_name: str) -> bool:
