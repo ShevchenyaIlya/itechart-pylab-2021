@@ -84,6 +84,10 @@ body {
     cursor: pointer;
 }
 
+.commentsButtonContainer {
+    float: right;
+}
+
 @media screen and (max-width: 500px) {
     .navbar a {
         float: none;

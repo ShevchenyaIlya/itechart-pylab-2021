@@ -1,50 +1,27 @@
 import React, {Component, useState} from "react";
-import {convertToRaw, convertFromRaw, EditorState, Modifier} from "draft-js";
-import PropTypes from 'prop-types';
+import {convertToRaw, convertFromRaw, EditorState} from "draft-js";
 import {Editor} from "react-draft-wysiwyg";
 import "react-draft-wysiwyg/dist/react-draft-wysiwyg.css";
 import {Paper} from "@material-ui/core";
-import ChatBubbleIcon from '@material-ui/icons/ChatBubble';
 import {send_request} from "./send_request";
 import {useHistory} from "react-router-dom";
 import CustomMenu from "./menu";
 import FormDialog from "./placeCommentDialog";
+import {CommentButton} from "./commentWidgets";
+import CustomOption from "./customOption";
+
 
 const styleMap = {
   'COMMENT': {
-    backgroundColor: 'rgba(255, 255, 0, 0.5)',
+    backgroundColor: 'rgba(255, 255, 0, 0.25)',
   },
 };
 
-class CustomOption extends Component {
-  static propTypes = {
-    onChange: PropTypes.func,
-    editorState: PropTypes.object,
-  };
-
-  addComment = () => {
-    this.props.setOpen(true);
-    const { editorState, onChange } = this.props;
-    const contentState = Modifier.applyInlineStyle(
-      editorState.getCurrentContent(),
-      editorState.getSelection(),
-      'COMMENT',
-    );
-    onChange(EditorState.push(editorState, contentState, 'change-inline-style'));
-  };
-
-  render() {
-    return (
-      <div id="customEditorButton" onClick={this.addComment}><ChatBubbleIcon/></div>
-    );
-  }
-}
 
 class ControlledEditor extends Component {
   constructor(props) {
     super(props);
     this.document_id = props.document;
-
     this.state = {
       editorState: EditorState.createEmpty(),
     };
@@ -101,8 +78,12 @@ class ControlledEditor extends Component {
           editorClassName="demo-editor"
           onEditorStateChange={this.onEditorStateChange}
           readOnly={this.props.readOnly}
-          toolbarCustomButtons={[<CustomOption setOpen={this.props.setOpen}/>]}
+          toolbarCustomButtons={[<CustomOption setOpen={this.props.setOpen}
+                                               setSelectedText={this.props.setSelectedText}/>]}
           customStyleMap={styleMap}
+          toolbar={{
+            link: { showOpenOptionOnHover: true},
+          }}
         />
     );
   }
@@ -110,15 +91,18 @@ class ControlledEditor extends Component {
 
 function DocumentEditor({document}) {
   let [readOnlyDocument, setMode] = useState(false);
-  const [openModalWindow, setOpen] = React.useState(false);
+  const [openModalWindow, setOpen] = useState(false);
+  const [selectedText, setSelectedText] = useState(false);
   const history = useHistory();
 
   return (
       <>
-        <FormDialog openModalWindow={openModalWindow} setOpen={setOpen}/>
+        <FormDialog openModalWindow={openModalWindow} setOpen={setOpen} document={document} selectedText={selectedText}/>
         <CustomMenu document={document} readOnly={readOnlyDocument} setMode={setMode}/>
+        <CommentButton document={document}/>
         <Paper elevation={3} className="editorContainer">
-          <ControlledEditor document={document} history={history} readOnly={readOnlyDocument} setMode={setMode} setOpen={setOpen}/>
+          <ControlledEditor document={document} history={history} readOnly={readOnlyDocument}
+                            setSelectedText={setSelectedText} setMode={setMode} setOpen={setOpen}/>
         </Paper>
       </>
   );
