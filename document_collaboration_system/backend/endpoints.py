@@ -23,7 +23,6 @@ mongo = MongoDBHandler()
 @app.route('/login', methods=["POST"])
 def login() -> Tuple[Any, int]:
     nickname = request.data.decode("utf-8")
-    # mongo.create_user(nickname, Role.GENERAL_DIRECTOR, "C")
     user = mongo.find_user_by_name(nickname)
 
     if user is None:
@@ -151,6 +150,31 @@ def archive_document(document_id: str) -> Tuple[Any, int]:
     mongo.update_document(document_id, "status", Status.ARCHIVE)
 
     return jsonify({}), 200
+
+
+@app.route('/comment/<document_id>', methods=["POST"])
+@jwt_required()
+def leave_comment(document_id: str) -> Tuple[Any, int]:
+    content = request.get_json()
+    comment_id = mongo.leave_comment(
+        document_id, get_jwt_identity(), content["comment"], content["target"]
+    )
+
+    if comment_id is None:
+        return jsonify({}), 400
+
+    return jsonify({"id": str(comment_id)}), 200
+
+
+@app.route('/comments/<document_id>', methods=["GET"])
+@jwt_required()
+def get_document_comments(document_id: str) -> Tuple[Any, int]:
+    comments = mongo.get_document_comments(document_id)
+
+    for comment in comments:
+        comment["_id"] = str(comment["_id"])
+
+    return jsonify(comments), 200
 
 
 @app.after_request

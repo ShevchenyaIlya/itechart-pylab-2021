@@ -138,3 +138,21 @@ class MongoDBHandler:
 
     def select_company_documents(self, company: str) -> List:
         return list(self.db.documents.find({"company": company}))
+
+    def leave_comment(
+        self, document_id: str, author: str, comment: str, commented_text: str
+    ) -> Optional[Dict]:
+        user: Dict = cast(Dict, self.find_user_by_id(ObjectId(author)))
+
+        return self.db.comments.insert_one(
+            {
+                "author": user["username"],
+                "document_id": document_id,
+                "creation_date": datetime.now(),
+                "commented_text": commented_text,
+                "comment": comment,
+            }
+        ).inserted_id
+
+    def get_document_comments(self, document_id: str) -> List:
+        return list(self.db.comments.find({"document_id": document_id}))
